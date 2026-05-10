@@ -17,5 +17,28 @@ export declare module "solid-js" {
     interface Directives {
       sortable: true
     }
+
+    interface IntrinsicElements {
+      webview: HTMLAttributes<WebViewTag> & {
+        src?: string
+        partition?: string
+        allowpopups?: boolean | string
+        webpreferences?: string
+      }
+    }
   }
+}
+
+interface WebViewNavigationEvent extends Event {
+  url?: string
+}
+
+interface WebViewTag extends HTMLElement {
+  loadURL(url: string): void
+  reload(): void
+  goBack(): void
+  goForward(): void
+  canGoBack(): boolean
+  canGoForward(): boolean
+  getURL(): string
 }

@@ -459,6 +459,19 @@ export const useSessionCommands = (actions: SessionCommandContext) => {
       slash: "terminal",
       onSelect: () => view().terminal.toggle(),
     }),
+    ...(platform.platform === "desktop"
+      ? [
+          viewCommand({
+            id: "browser.toggle",
+            title: language.t("command.browser.toggle"),
+            slash: "browser",
+            onSelect: () => {
+              view().browser.open()
+              void tabs().open("browser")
+            },
+          }),
+        ]
+      : []),
     viewCommand({
       id: "review.toggle",
       title: language.t("command.review.toggle"),

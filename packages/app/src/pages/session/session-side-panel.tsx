@@ -2,6 +2,7 @@ import { For, Match, Show, Switch, createEffect, createMemo, onCleanup, type JSX
 import { createStore } from "solid-js/store"
 import { createMediaQuery } from "@solid-primitives/media"
 import { Tabs } from "@opencode-ai/ui/tabs"
+import { Icon } from "@opencode-ai/ui/icon"
 import { IconButton } from "@opencode-ai/ui/icon-button"
 import { TooltipKeybind } from "@opencode-ai/ui/tooltip"
 import { ResizeHandle } from "@opencode-ai/ui/resize-handle"
@@ -25,6 +26,7 @@ import { useSync } from "@/context/sync"
 import { createFileTabListSync } from "@/pages/session/file-tab-scroll"
 import { FileTabContent } from "@/pages/session/file-tabs"
 import { createOpenSessionFileTab, createSessionTabs, getTabReorderIndex, type Sizing } from "@/pages/session/helpers"
+import { BrowserPanel } from "@/pages/session/browser-panel"
 import { setSessionHandoff } from "@/pages/session/handoff"
 import { useSessionLayout } from "@/pages/session/session-layout"
 
@@ -66,12 +68,14 @@ export function SessionSidePanel(props: {
   )
 
   const reviewOpen = createMemo(() => isDesktop() && view().reviewPanel.opened())
+  const browserOpen = createMemo(() => isDesktop() && platform.platform === "desktop" && view().browser.opened())
   const fileOpen = createMemo(() => isDesktop() && shown() && layout.fileTree.opened())
-  const open = createMemo(() => reviewOpen() || fileOpen())
+  const open = createMemo(() => reviewOpen() || browserOpen() || fileOpen())
   const reviewTab = createMemo(() => isDesktop())
+  const browserTab = createMemo(() => browserOpen())
   const panelWidth = createMemo(() => {
     if (!open()) return "0px"
-    if (reviewOpen()) return `calc(100% - ${layout.session.width()}px)`
+    if (reviewOpen() || browserOpen()) return `calc(100% - ${layout.session.width()}px)`
     return `${layout.fileTree.width()}px`
   })
   const treeWidth = createMemo(() => (fileOpen() ? `${layout.fileTree.width()}px` : "0px"))
@@ -143,6 +147,7 @@ export function SessionSidePanel(props: {
     normalizeTab,
     review: reviewTab,
     hasReview: props.canReview,
+    browser: browserTab,
   })
   const contextOpen = tabState.contextOpen
   const openedTabs = tabState.openedTabs
@@ -159,6 +164,11 @@ export function SessionSidePanel(props: {
   const showAllFiles = () => {
     if (fileTreeTab() !== "changes") return
     layout.fileTree.setTab("all")
+  }
+
+  const closeBrowser = () => {
+    view().browser.close()
+    tabs().close("browser")
   }
 
   const [store, setStore] = createStore({
@@ -223,11 +233,11 @@ export function SessionSidePanel(props: {
       >
         <div class="size-full flex border-l border-border-weaker-base">
           <div
-            aria-hidden={!reviewOpen()}
-            inert={!reviewOpen()}
+            aria-hidden={!reviewOpen() && !browserOpen()}
+            inert={!reviewOpen() && !browserOpen()}
             class="relative min-w-0 h-full flex-1 overflow-hidden bg-background-base"
             classList={{
-              "pointer-events-none": !reviewOpen(),
+              "pointer-events-none": !reviewOpen() && !browserOpen(),
             }}
           >
             <div class="size-full min-w-0 h-full bg-background-base">
@@ -285,6 +295,29 @@ export function SessionSidePanel(props: {
                           </div>
                         </Tabs.Trigger>
                       </Show>
+                      <Show when={browserOpen()}>
+                        <Tabs.Trigger
+                          value="browser"
+                          closeButton={
+                            <TooltipKeybind title={language.t("browser.close")} placement="bottom" gutter={10}>
+                              <IconButton
+                                icon="close-small"
+                                variant="ghost"
+                                class="h-5 w-5"
+                                onClick={closeBrowser}
+                                aria-label={language.t("browser.close")}
+                              />
+                            </TooltipKeybind>
+                          }
+                          hideCloseButton
+                          onMiddleClick={closeBrowser}
+                        >
+                          <div class="flex items-center gap-2">
+                            <Icon name="browser" size="small" />
+                            <div>{language.t("session.tab.browser")}</div>
+                          </div>
+                        </Tabs.Trigger>
+                      </Show>
                       <SortableProvider ids={openedTabs()}>
                         <For each={openedTabs()}>{(tab) => <SortableTab tab={tab} onTabClose={tabs().close} />}</For>
                       </SortableProvider>
@@ -337,6 +370,12 @@ export function SessionSidePanel(props: {
                           <SessionContextTab />
                         </div>
                       </Show>
+                    </Tabs.Content>
+                  </Show>
+
+                  <Show when={browserOpen()}>
+                    <Tabs.Content value="browser" class="flex flex-col h-full overflow-hidden contain-strict">
+                      <BrowserPanel active={() => activeTab() === "browser"} />
                     </Tabs.Content>
                   </Show>
 
