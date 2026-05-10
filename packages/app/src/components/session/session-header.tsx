@@ -138,7 +138,7 @@ export function SessionHeader() {
   const settings = useSettings()
   const sync = useSync()
   const terminal = useTerminal()
-  const { params, view } = useSessionLayout()
+  const { params, tabs, view } = useSessionLayout()
 
   const projectDirectory = createMemo(() => decode64(params.dir) ?? "")
   const project = createMemo(() => {
@@ -158,6 +158,7 @@ export function SessionHeader() {
   const tree = createMemo(() => !isDesktopBeta || settings.general.showFileTree())
   const term = createMemo(() => !isDesktopBeta || settings.general.showTerminal())
   const status = createMemo(() => !isDesktopBeta || settings.general.showStatus())
+  const browserAvailable = createMemo(() => platform.platform === "desktop")
 
   const [exists, setExists] = createStore<Partial<Record<OpenApp, boolean>>>({
     finder: true,
@@ -212,6 +213,17 @@ export function SessionHeader() {
     const id = terminal.active()
     if (!id) return
     focusTerminalById(id)
+  }
+
+  const toggleBrowser = () => {
+    if (view().browser.opened() && tabs().active() === "browser") {
+      view().browser.close()
+      tabs().close("browser")
+      return
+    }
+
+    view().browser.open()
+    void tabs().open("browser")
   }
 
   const [prefs, setPrefs] = persisted(Persist.global("open.app"), createStore({ app: "finder" as OpenApp }))
@@ -450,6 +462,20 @@ export function SessionHeader() {
                 </Show>
 
                 <div class="hidden md:flex items-center gap-1 shrink-0">
+                  <Show when={browserAvailable()}>
+                    <TooltipKeybind title={language.t("command.browser.toggle")}>
+                      <Button
+                        variant="ghost"
+                        class="group/browser-toggle titlebar-icon w-8 h-6 p-0 box-border shrink-0"
+                        onClick={toggleBrowser}
+                        aria-label={language.t("command.browser.toggle")}
+                        aria-expanded={view().browser.opened()}
+                        aria-controls="browser-panel"
+                      >
+                        <Icon size="small" name={view().browser.opened() ? "browser-active" : "browser"} />
+                      </Button>
+                    </TooltipKeybind>
+                  </Show>
                   <TooltipKeybind
                     title={language.t("command.review.toggle")}
                     keybind={command.keybind("review.toggle")}

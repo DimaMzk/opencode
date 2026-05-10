@@ -22,6 +22,9 @@ const icons = {
   "close-small": `<path d="M6 6L14 14M14 6L6 14" stroke="currentColor" stroke-linecap="square"/>`,
   checklist: `<path d="M9.58342 13.7498H17.0834M9.58342 6.24984H17.0834M2.91675 6.6665L4.58341 7.9165L7.08341 4.1665M2.91675 14.1665L4.58341 15.4165L7.08341 11.6665" stroke="currentColor" stroke-linecap="square"/>`,
   console: `<path d="M3.75 5.4165L8.33333 9.99984L3.75 14.5832M10.4167 14.5832H16.25" stroke="currentColor" stroke-linecap="square"/>`,
+  browser: `<path d="M17.9166 17.0833H2.08325V2.91663H17.9166V17.0833ZM2.08325 6.66663H17.9166M5.20825 4.79163H5.21659M7.70825 4.79163H7.71659M10.2083 4.79163H10.2166" stroke="currentColor" stroke-linecap="square"/>`,
+  "browser-active": `<path d="M2.08325 6.66663H17.9166V17.0833H2.08325V6.66663Z" fill="currentColor" fill-opacity="0.1"/>
+<path d="M17.9166 17.0833H2.08325V2.91663H17.9166V17.0833ZM2.08325 6.66663H17.9166M5.20825 4.79163H5.21659M7.70825 4.79163H7.71659M10.2083 4.79163H10.2166" stroke="currentColor" stroke-linecap="square"/>`,
   terminal: `<path d="M6.5 8L8.64286 10L6.5 12M10.9286 12H13.5M2 18H18V2H2V18Z" stroke="currentColor" stroke-linecap="square"/>`,
   "terminal-active": `<path d="M2 18H18V2H2V18Z" fill="currentColor" fill-opacity="0.1"/>
 <path d="M6.5 8L8.64286 10L6.5 12M10.9286 12H13.5M2 18H18V2H2V18Z" stroke="currentColor" stroke-linecap="square"/>`,

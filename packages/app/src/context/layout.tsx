@@ -45,6 +45,11 @@ type SessionView = {
   pendingMessageAt?: number
 }
 
+type BrowserState = {
+  opened?: boolean
+  url?: string
+}
+
 type TabHandoff = {
   dir: string
   id: string
@@ -94,7 +99,7 @@ export function pruneSessionKeys(input: {
 
 function nextSessionTabsForOpen(current: SessionTabs | undefined, tab: string): SessionTabs {
   const all = current?.all ?? []
-  if (tab === "review") return { all: all.filter((x) => x !== "review"), active: tab }
+  if (tab === "review" || tab === "browser") return { all: all.filter((x) => x !== tab), active: tab }
   if (tab === "context") return { all: [tab, ...all.filter((x) => x !== tab)], active: tab }
   if (!all.includes(tab)) return { all: [...all, tab], active: tab }
   return { all, active: tab }
@@ -240,6 +245,7 @@ export const { use: useLayout, provider: LayoutProvider } = createSimpleContext(
           height: DEFAULT_TERMINAL_HEIGHT,
           opened: false,
         },
+        browser: {} as Record<string, BrowserState>,
         review: {
           diffStyle: "split" as ReviewDiffStyle,
           panelOpened: true,
@@ -725,7 +731,11 @@ export const { use: useLayout, provider: LayoutProvider } = createSimpleContext(
       view(sessionKey: string | Accessor<string>) {
         const key = createSessionKeyReader(sessionKey, ensureKey)
         const s = createMemo(() => store.sessionView[key()] ?? { scroll: {} })
+        const dir = createMemo(() => key().split("/")[0] ?? "")
         const terminalOpened = createMemo(() => store.terminal?.opened ?? false)
+        const browserState = createMemo(() => store.browser?.[dir()] ?? {})
+        const browserOpened = createMemo(() => browserState().opened ?? false)
+        const browserUrl = createMemo(() => browserState().url)
         const reviewPanelOpened = createMemo(() => store.review?.panelOpened ?? true)
 
         function setTerminalOpened(next: boolean) {
@@ -752,6 +762,19 @@ export const { use: useLayout, provider: LayoutProvider } = createSimpleContext(
           setStore("review", "panelOpened", next)
         }
 
+        function setBrowserState(patch: BrowserState) {
+          const current = store.browser?.[dir()]
+          if (!store.browser) {
+            setStore("browser", { [dir()]: patch })
+            return
+          }
+          if (!current) {
+            setStore("browser", dir(), patch)
+            return
+          }
+          setStore("browser", dir(), { ...current, ...patch })
+        }
+
         return {
           scroll(tab: string) {
             return scroll.scroll(key(), tab)
@@ -769,6 +792,22 @@ export const { use: useLayout, provider: LayoutProvider } = createSimpleContext(
             },
             toggle() {
               setTerminalOpened(!terminalOpened())
+            },
+          },
+          browser: {
+            opened: browserOpened,
+            url: browserUrl,
+            open() {
+              setBrowserState({ opened: true })
+            },
+            close() {
+              setBrowserState({ opened: false })
+            },
+            toggle() {
+              setBrowserState({ opened: !browserOpened() })
+            },
+            setUrl(url: string) {
+              setBrowserState({ url })
             },
           },
           reviewPanel: {
@@ -887,7 +926,7 @@ export const { use: useLayout, provider: LayoutProvider } = createSimpleContext(
             const current = store.sessionTabs[session]
             if (!current) return
 
-            if (tab === "review") {
+            if (tab === "review" || tab === "browser") {
               if (current.active !== tab) return
               setStore("sessionTabs", session, "active", current.all[0])
               return
