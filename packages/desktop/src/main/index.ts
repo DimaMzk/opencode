@@ -65,7 +65,7 @@ const pendingDeepLinks: string[] = []
 function useEnvProxy() {
   try {
     // Electron 41.2 runs Node 24.14.1; latest @types/node@24 is 24.12.2.
-    ;(http as any).setGlobalProxyFromEnv()
+    ; (http as any).setGlobalProxyFromEnv()
   } catch (error) {
     logger.warn("failed to load proxy environment", error)
   }
@@ -122,7 +122,7 @@ const main = Effect.gen(function* () {
   // on macOS apps run in `/` which can cause issues with ripgrep
   try {
     process.chdir(homedir())
-  } catch {}
+  } catch { }
 
   process.env.OPENCODE_DISABLE_EMBEDDED_WEB_UI = "true"
 
@@ -132,9 +132,9 @@ const main = Effect.gen(function* () {
 
     const root = join(tmpdir(), `opencode-onboarding-${randomUUID()}`)
     rmSync(root, { recursive: true, force: true })
-    ;["data", "config", "cache", "state", "desktop", "session"].forEach((dir) =>
-      mkdirSync(join(root, dir), { recursive: true }),
-    )
+      ;["data", "config", "cache", "state", "desktop", "session"].forEach((dir) =>
+        mkdirSync(join(root, dir), { recursive: true }),
+      )
     process.env.OPENCODE_DB = ":memory:"
     process.env.XDG_DATA_HOME = join(root, "data")
     process.env.XDG_CONFIG_HOME = join(root, "config")
