@@ -88,6 +88,16 @@ export function BrowserPanel(props: { active: Accessor<boolean> }) {
             <Icon name="reset" size="small" classList={{ "animate-spin": state().loading }} />
           </Button>
         </Tooltip>
+        <Tooltip placement="bottom" value={language.t("browser.devTools")}>
+          <Button
+            variant="ghost"
+            class="w-7 h-7 p-0 shrink-0"
+            onClick={() => browser.devTools(dir())}
+            aria-label={language.t("browser.devTools")}
+          >
+            <Icon name="code" size="small" />
+          </Button>
+        </Tooltip>
         <form
           class="flex-1 min-w-0"
           onSubmit={(event) => {

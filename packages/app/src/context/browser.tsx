@@ -27,6 +27,7 @@ type BrowserContext = {
   back: (dir: string) => void
   forward: (dir: string) => void
   reload: (dir: string) => void
+  devTools: (dir: string) => void
 }
 
 const defaultChrome = { loading: false, canGoBack: false, canGoForward: false }
@@ -156,6 +157,9 @@ export function BrowserProvider(props: ParentProps) {
     },
     reload(dir) {
       void window.api?.browserReload?.(dir)
+    },
+    devTools(dir) {
+      void window.api?.browserToggleDevTools?.(dir)
     },
   }
 

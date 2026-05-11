@@ -21,6 +21,7 @@ import {
   browserReload,
   browserSetActive,
   browserSetBounds,
+  browserToggleDevTools,
 } from "./browser"
 
 const pickerFilters = (ext?: string[]) => {
@@ -92,6 +93,9 @@ export function registerIpcHandlers(deps: Deps) {
   ipcMain.handle("browser-back", (event: IpcMainInvokeEvent, dir: string) => browserBack(event, dir))
   ipcMain.handle("browser-forward", (event: IpcMainInvokeEvent, dir: string) => browserForward(event, dir))
   ipcMain.handle("browser-reload", (event: IpcMainInvokeEvent, dir: string) => browserReload(event, dir))
+  ipcMain.handle("browser-toggle-dev-tools", (event: IpcMainInvokeEvent, dir: string) =>
+    browserToggleDevTools(event, dir),
+  )
   ipcMain.handle("store-get", (_event: IpcMainInvokeEvent, name: string, key: string) => {
     try {
       const store = getStore(name)

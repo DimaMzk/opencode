@@ -98,5 +98,6 @@ export type ElectronAPI = {
   browserBack: (dir: string) => Promise<void>
   browserForward: (dir: string) => Promise<void>
   browserReload: (dir: string) => Promise<void>
+  browserToggleDevTools: (dir: string) => Promise<void>
   onBrowserState: (cb: (state: BrowserState) => void) => () => void
 }

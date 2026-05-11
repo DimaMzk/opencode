@@ -140,3 +140,16 @@ export function browserReload(event: IpcMainInvokeEvent, dir: string) {
     if (!win) return
     views(win).get(dir)?.webContents.reload()
 }
+
+export function browserToggleDevTools(event: IpcMainInvokeEvent, dir: string) {
+    const win = windowFrom(event)
+    const view = win && views(win).get(dir)
+    if (!view) return
+
+    if (view.webContents.isDevToolsOpened()) {
+        view.webContents.closeDevTools()
+        return
+    }
+
+    view.webContents.openDevTools({ mode: "detach" })
+}
