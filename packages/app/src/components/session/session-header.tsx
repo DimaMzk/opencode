@@ -471,7 +471,7 @@ export function SessionHeader() {
 
                 <div class="hidden md:flex items-center gap-1 shrink-0">
                   <Show when={browserAvailable()}>
-                    <TooltipKeybind title={language.t("command.browser.toggle")}>
+                    <Tooltip value={language.t("command.browser.toggle")}>
                       <Button
                         variant="ghost"
                         class="group/browser-toggle titlebar-icon w-8 h-6 p-0 box-border shrink-0"
@@ -482,7 +482,7 @@ export function SessionHeader() {
                       >
                         <Icon size="small" name={view().browser.opened() ? "browser-active" : "browser"} />
                       </Button>
-                    </TooltipKeybind>
+                    </Tooltip>
                   </Show>
                   <TooltipKeybind
                     title={language.t("command.review.toggle")}

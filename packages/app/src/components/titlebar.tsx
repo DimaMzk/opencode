@@ -62,6 +62,11 @@ export function Titlebar() {
     return undefined
   }
   const windowsControlsWidth = () => `${windowsControlsBaseWidth / Math.max(titlebarZoom(), 1)}px`
+  const channelBadge = createMemo(() => {
+    const channel = import.meta.env.VITE_OPENCODE_CHANNEL
+    if (channel !== "beta" && channel !== "dev") return
+    return channel.toUpperCase()
+  })
 
   const [history, setHistory] = createStore({
     stack: [] as string[],
@@ -302,11 +307,13 @@ export function Titlebar() {
                   </div>
                 </Show>
                 <div id="opencode-titlebar-left" class="flex items-center gap-3 min-w-0 px-2" />
-                {["beta", "dev"].includes(import.meta.env.VITE_OPENCODE_CHANNEL) && (
-                  <div class="bg-icon-interactive-base text-[#FFF] font-medium px-2 rounded-sm uppercase font-mono">
-                    {import.meta.env.VITE_OPENCODE_CHANNEL.toUpperCase()}
-                  </div>
-                )}
+                <Show when={channelBadge()}>
+                  {(channel) => (
+                    <div class="bg-icon-interactive-base text-[#FFF] font-medium px-2 rounded-sm uppercase font-mono">
+                      {channel()}
+                    </div>
+                  )}
+                </Show>
               </div>
             </div>
           </div>
