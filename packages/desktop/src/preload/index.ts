@@ -73,7 +73,7 @@ const api: ElectronAPI = {
   browserBack: (dir) => ipcRenderer.invoke("browser-back", dir),
   browserForward: (dir) => ipcRenderer.invoke("browser-forward", dir),
   browserReload: (dir) => ipcRenderer.invoke("browser-reload", dir),
-  browserToggleDevTools: (dir) => ipcRenderer.invoke("browser-toggle-dev-tools", dir),
+  browserOpenDevTools: (dir, mode) => ipcRenderer.invoke("browser-open-dev-tools", dir, mode),
   onBrowserState: (cb) => {
     const handler = (_: unknown, state: BrowserState) => cb(state)
     ipcRenderer.on("browser-state", handler)

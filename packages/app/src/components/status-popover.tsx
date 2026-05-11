@@ -1,17 +1,21 @@
 import { Button } from "@opencode-ai/ui/button"
 import { Icon } from "@opencode-ai/ui/icon"
 import { Popover } from "@opencode-ai/ui/popover"
-import { Suspense, createMemo, createSignal, lazy, Show } from "solid-js"
+import { Suspense, createEffect, createMemo, createSignal, lazy, onCleanup, Show } from "solid-js"
+import { useBrowser } from "@/context/browser"
 import { useLanguage } from "@/context/language"
 import { useServer } from "@/context/server"
 import { useSync } from "@/context/sync"
+import { useSessionLayout } from "@/pages/session/session-layout"
 
 const Body = lazy(() => import("./status-popover-body").then((x) => ({ default: x.StatusPopoverBody })))
 
 export function StatusPopover() {
+  const browser = useBrowser()
   const language = useLanguage()
   const server = useServer()
   const sync = useSync()
+  const { params } = useSessionLayout()
   const [shown, setShown] = createSignal(false)
   const ready = createMemo(() => server.healthy() === false || sync.data.mcp_ready)
   const healthy = createMemo(() => {
@@ -19,6 +23,13 @@ export function StatusPopover() {
     const mcp = Object.values(sync.data.mcp ?? {})
     const issue = mcp.some((item) => item.status !== "connected" && item.status !== "disabled")
     return serverHealthy && !issue
+  })
+
+  createEffect(() => {
+    const dir = params.dir ?? ""
+    if (!dir) return
+    browser.setOccluded(dir, "status-popover", shown())
+    onCleanup(() => browser.setOccluded(dir, "status-popover", false))
   })
 
   return (

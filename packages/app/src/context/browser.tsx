@@ -19,15 +19,19 @@ type Rect = {
   height: number
 }
 
+export type BrowserDevToolsMode = "right" | "bottom" | "detach"
+type BrowserOcclusionSource = "devtools-menu" | "open-menu" | "status-popover"
+
 type BrowserContext = {
   state: (dir: string) => ChromeState
   register: (dir: string, el: HTMLElement) => void
   setActive: (dir: string, active: boolean) => void
+  setOccluded: (dir: string, source: BrowserOcclusionSource, occluded: boolean) => void
   navigate: (dir: string, url: string) => void
   back: (dir: string) => void
   forward: (dir: string) => void
   reload: (dir: string) => void
-  devTools: (dir: string) => void
+  devTools: (dir: string, mode: BrowserDevToolsMode) => void
 }
 
 const defaultChrome = { loading: false, canGoBack: false, canGoForward: false }
@@ -109,6 +113,7 @@ export function BrowserProvider(props: ParentProps) {
     dirs: [] as string[],
     viewport: {} as Record<string, HTMLElement | undefined>,
     active: {} as Record<string, boolean>,
+    occluded: {} as Record<string, Partial<Record<BrowserOcclusionSource, boolean>>>,
     chrome: {} as Record<string, ChromeState>,
   })
 
@@ -145,6 +150,10 @@ export function BrowserProvider(props: ParentProps) {
       ensure(dir)
       setStore("active", dir, active)
     },
+    setOccluded(dir, source, occluded) {
+      if (!store.occluded[dir]) setStore("occluded", dir, {})
+      setStore("occluded", dir, source, occluded)
+    },
     navigate(dir, url) {
       ensure(dir)
       layout.view(dir).browser.setUrl(url)
@@ -158,8 +167,8 @@ export function BrowserProvider(props: ParentProps) {
     reload(dir) {
       void window.api?.browserReload?.(dir)
     },
-    devTools(dir) {
-      void window.api?.browserToggleDevTools?.(dir)
+    devTools(dir, mode) {
+      void window.api?.browserOpenDevTools?.(dir, mode)
     },
   }
 
@@ -170,7 +179,7 @@ export function BrowserProvider(props: ParentProps) {
         {(dir) => (
           <BrowserNativeView
             dir={dir}
-            active={() => store.active[dir] ?? false}
+            active={() => (store.active[dir] ?? false) && !Object.values(store.occluded[dir] ?? {}).some(Boolean)}
             viewport={() => store.viewport[dir]}
           />
         )}

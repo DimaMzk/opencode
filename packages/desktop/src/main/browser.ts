@@ -1,6 +1,6 @@
 import { BrowserWindow, WebContentsView, shell } from "electron"
 import type { IpcMainInvokeEvent } from "electron"
-import type { BrowserRect, BrowserState } from "../preload/types"
+import type { BrowserDevToolsMode, BrowserRect, BrowserState } from "../preload/types"
 
 const DEFAULT_URL = "about:blank"
 const PARTITION = "persist:opencode-browser"
@@ -141,15 +141,12 @@ export function browserReload(event: IpcMainInvokeEvent, dir: string) {
     views(win).get(dir)?.webContents.reload()
 }
 
-export function browserToggleDevTools(event: IpcMainInvokeEvent, dir: string) {
+export function browserOpenDevTools(event: IpcMainInvokeEvent, dir: string, mode: BrowserDevToolsMode) {
     const win = windowFrom(event)
     const view = win && views(win).get(dir)
     if (!view) return
 
-    if (view.webContents.isDevToolsOpened()) {
-        view.webContents.closeDevTools()
-        return
-    }
+    if (view.webContents.isDevToolsOpened()) view.webContents.closeDevTools()
 
-    view.webContents.openDevTools({ mode: "detach" })
+    view.webContents.openDevTools({ mode })
 }

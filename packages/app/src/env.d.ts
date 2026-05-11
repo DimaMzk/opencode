@@ -37,6 +37,8 @@ type BrowserState = {
   canGoForward: boolean
 }
 
+type BrowserDevToolsMode = "right" | "bottom" | "detach"
+
 declare global {
   interface Window {
     api?: {
@@ -48,7 +50,7 @@ declare global {
       browserBack?: (dir: string) => Promise<void>
       browserForward?: (dir: string) => Promise<void>
       browserReload?: (dir: string) => Promise<void>
-      browserToggleDevTools?: (dir: string) => Promise<void>
+      browserOpenDevTools?: (dir: string, mode: BrowserDevToolsMode) => Promise<void>
       onBrowserState?: (cb: (state: BrowserState) => void) => () => void
     }
   }

@@ -34,6 +34,8 @@ export type BrowserState = {
   canGoForward: boolean
 }
 
+export type BrowserDevToolsMode = "right" | "bottom" | "detach"
+
 export type ElectronAPI = {
   killSidecar: () => Promise<void>
   installCli: () => Promise<string>
@@ -98,6 +100,6 @@ export type ElectronAPI = {
   browserBack: (dir: string) => Promise<void>
   browserForward: (dir: string) => Promise<void>
   browserReload: (dir: string) => Promise<void>
-  browserToggleDevTools: (dir: string) => Promise<void>
+  browserOpenDevTools: (dir: string, mode: BrowserDevToolsMode) => Promise<void>
   onBrowserState: (cb: (state: BrowserState) => void) => () => void
 }
