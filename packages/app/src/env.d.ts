@@ -1,44 +1,59 @@
-interface ImportMetaEnv {
-  readonly VITE_OPENCODE_SERVER_HOST: string
-  readonly VITE_OPENCODE_SERVER_PORT: string
-  readonly VITE_OPENCODE_CHANNEL?: "dev" | "beta" | "prod"
+declare global {
+  interface ImportMetaEnv {
+    readonly VITE_OPENCODE_SERVER_HOST: string
+    readonly VITE_OPENCODE_SERVER_PORT: string
+    readonly VITE_OPENCODE_CHANNEL?: "dev" | "beta" | "prod"
 
-  readonly VITE_SENTRY_DSN?: string
-  readonly VITE_SENTRY_ENVIRONMENT?: string
-  readonly VITE_SENTRY_RELEASE?: string
+    readonly VITE_SENTRY_DSN?: string
+    readonly VITE_SENTRY_ENVIRONMENT?: string
+    readonly VITE_SENTRY_RELEASE?: string
+  }
+
+  interface ImportMeta {
+    readonly env: ImportMetaEnv
+  }
 }
 
-interface ImportMeta {
-  readonly env: ImportMetaEnv
-}
-
-export declare module "solid-js" {
+declare module "solid-js" {
   namespace JSX {
     interface Directives {
       sortable: true
     }
+  }
+}
 
-    interface IntrinsicElements {
-      webview: HTMLAttributes<WebViewTag> & {
-        src?: string
-        partition?: string
-        allowpopups?: boolean | string
-        webpreferences?: string
-      }
+type BrowserRect = {
+  top: number
+  left: number
+  width: number
+  height: number
+}
+
+type BrowserState = {
+  dir: string
+  url: string
+  loading: boolean
+  canGoBack: boolean
+  canGoForward: boolean
+}
+
+type BrowserDevToolsMode = "right" | "bottom" | "detach"
+
+declare global {
+  interface Window {
+    api?: {
+      setTitlebar?: (theme: { mode: "light" | "dark" }) => Promise<void>
+      browserEnsure?: (dir: string, url?: string) => Promise<void>
+      browserSetBounds?: (dir: string, rect: BrowserRect) => Promise<void>
+      browserSetActive?: (dir: string, active: boolean) => Promise<void>
+      browserNavigate?: (dir: string, url: string) => Promise<void>
+      browserBack?: (dir: string) => Promise<void>
+      browserForward?: (dir: string) => Promise<void>
+      browserReload?: (dir: string) => Promise<void>
+      browserOpenDevTools?: (dir: string, mode: BrowserDevToolsMode) => Promise<void>
+      onBrowserState?: (cb: (state: BrowserState) => void) => () => void
     }
   }
 }
 
-interface WebViewNavigationEvent extends Event {
-  url?: string
-}
-
-interface WebViewTag extends HTMLElement {
-  loadURL(url: string): void
-  reload(): void
-  goBack(): void
-  goForward(): void
-  canGoBack(): boolean
-  canGoForward(): boolean
-  getURL(): string
-}
+export { }

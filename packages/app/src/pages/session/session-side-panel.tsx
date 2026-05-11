@@ -299,7 +299,12 @@ export function SessionSidePanel(props: {
                         <Tabs.Trigger
                           value="browser"
                           closeButton={
-                            <TooltipKeybind title={language.t("browser.close")} placement="bottom" gutter={10}>
+                            <TooltipKeybind
+                              title={language.t("browser.close")}
+                              keybind={command.keybind("tab.close")}
+                              placement="bottom"
+                              gutter={10}
+                            >
                               <IconButton
                                 icon="close-small"
                                 variant="ghost"

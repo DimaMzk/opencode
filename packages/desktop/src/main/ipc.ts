@@ -4,6 +4,8 @@ import type { IpcMainEvent, IpcMainInvokeEvent } from "electron"
 
 import type {
   InitStep,
+  BrowserDevToolsMode,
+  BrowserRect,
   ServerReadyData,
   SqliteMigrationProgress,
   TitlebarTheme,
@@ -12,6 +14,16 @@ import type {
 } from "../preload/types"
 import { getStore } from "./store"
 import { setTitlebar, updateTitlebar } from "./windows"
+import {
+  browserBack,
+  browserEnsure,
+  browserForward,
+  browserNavigate,
+  browserOpenDevTools,
+  browserReload,
+  browserSetActive,
+  browserSetBounds,
+} from "./browser"
 
 const pickerFilters = (ext?: string[]) => {
   if (!ext || ext.length === 0) return undefined
@@ -69,6 +81,22 @@ export function registerIpcHandlers(deps: Deps) {
   ipcMain.handle("check-update", () => deps.checkUpdate())
   ipcMain.handle("install-update", () => deps.installUpdate())
   ipcMain.handle("set-background-color", (_event: IpcMainInvokeEvent, color: string) => deps.setBackgroundColor(color))
+  ipcMain.handle("browser-ensure", (event: IpcMainInvokeEvent, dir: string, url?: string) => browserEnsure(event, dir, url))
+  ipcMain.handle("browser-set-bounds", (event: IpcMainInvokeEvent, dir: string, rect: BrowserRect) =>
+    browserSetBounds(event, dir, rect),
+  )
+  ipcMain.handle("browser-set-active", (event: IpcMainInvokeEvent, dir: string, active: boolean) =>
+    browserSetActive(event, dir, active),
+  )
+  ipcMain.handle("browser-navigate", (event: IpcMainInvokeEvent, dir: string, url: string) =>
+    browserNavigate(event, dir, url),
+  )
+  ipcMain.handle("browser-back", (event: IpcMainInvokeEvent, dir: string) => browserBack(event, dir))
+  ipcMain.handle("browser-forward", (event: IpcMainInvokeEvent, dir: string) => browserForward(event, dir))
+  ipcMain.handle("browser-reload", (event: IpcMainInvokeEvent, dir: string) => browserReload(event, dir))
+  ipcMain.handle("browser-open-dev-tools", (event: IpcMainInvokeEvent, dir: string, mode: BrowserDevToolsMode) =>
+    browserOpenDevTools(event, dir, mode),
+  )
   ipcMain.handle("store-get", (_event: IpcMainInvokeEvent, name: string, key: string) => {
     try {
       const store = getStore(name)

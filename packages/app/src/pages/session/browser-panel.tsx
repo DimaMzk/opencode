@@ -1,12 +1,25 @@
-import { createEffect, createMemo, createSignal, onCleanup, Show, type Accessor } from "solid-js"
+import { createEffect, createMemo, createSignal, For, onCleanup, Show, type Accessor } from "solid-js"
 import { Button } from "@opencode-ai/ui/button"
+import { DropdownMenu } from "@opencode-ai/ui/dropdown-menu"
 import { Icon } from "@opencode-ai/ui/icon"
 import { Tooltip } from "@opencode-ai/ui/tooltip"
 import { useBrowser } from "@/context/browser"
+import type { BrowserDevToolsMode } from "@/context/browser"
 import { useLanguage } from "@/context/language"
 import { useSessionLayout } from "@/pages/session/session-layout"
 
 const DEFAULT_URL = "about:blank"
+
+type DevToolsOption = {
+  mode: BrowserDevToolsMode
+  label: "browser.devTools.right" | "browser.devTools.bottom" | "browser.devTools.window"
+}
+
+const DEVTOOLS_OPTIONS: DevToolsOption[] = [
+  { mode: "right", label: "browser.devTools.right" },
+  { mode: "bottom", label: "browser.devTools.bottom" },
+  { mode: "detach", label: "browser.devTools.window" },
+]
 
 const normalizeUrl = (value: string) => {
   const trimmed = value.trim()
@@ -22,6 +35,7 @@ export function BrowserPanel(props: { active: Accessor<boolean> }) {
   const language = useLanguage()
   const { params, view } = useSessionLayout()
   const [input, setInput] = createSignal(DEFAULT_URL)
+  const [devToolsMenuOpen, setDevToolsMenuOpen] = createSignal(false)
   let viewport: HTMLDivElement | undefined
 
   const dir = createMemo(() => params.dir ?? "")
@@ -44,6 +58,13 @@ export function BrowserPanel(props: { active: Accessor<boolean> }) {
     if (!key) return
     browser.setActive(key, props.active())
     onCleanup(() => browser.setActive(key, false))
+  })
+
+  createEffect(() => {
+    const key = dir()
+    if (!key) return
+    browser.setOccluded(key, "devtools-menu", devToolsMenuOpen())
+    onCleanup(() => browser.setOccluded(key, "devtools-menu", false))
   })
 
   const navigate = () => {
@@ -88,6 +109,35 @@ export function BrowserPanel(props: { active: Accessor<boolean> }) {
             <Icon name="reset" size="small" classList={{ "animate-spin": state().loading }} />
           </Button>
         </Tooltip>
+        <DropdownMenu gutter={4} placement="bottom-end" open={devToolsMenuOpen()} onOpenChange={setDevToolsMenuOpen}>
+          <DropdownMenu.Trigger
+            as={Button}
+            variant="ghost"
+            class="w-7 h-7 p-0 shrink-0 data-[expanded]:bg-surface-raised-base-active"
+            aria-label={language.t("browser.devTools")}
+          >
+            <Icon name="code" size="small" />
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content>
+              <DropdownMenu.Group>
+                <DropdownMenu.GroupLabel>{language.t("browser.devTools")}</DropdownMenu.GroupLabel>
+                <For each={DEVTOOLS_OPTIONS}>
+                  {(option) => (
+                    <DropdownMenu.Item
+                      onSelect={() => {
+                        setDevToolsMenuOpen(false)
+                        browser.devTools(dir(), option.mode)
+                      }}
+                    >
+                      <DropdownMenu.ItemLabel>{language.t(option.label)}</DropdownMenu.ItemLabel>
+                    </DropdownMenu.Item>
+                  )}
+                </For>
+              </DropdownMenu.Group>
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu>
         <form
           class="flex-1 min-w-0"
           onSubmit={(event) => {

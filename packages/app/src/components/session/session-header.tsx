@@ -11,6 +11,7 @@ import { getFilename } from "@opencode-ai/core/util/path"
 import { createEffect, createMemo, createSignal, For, onMount, Show } from "solid-js"
 import { createStore } from "solid-js/store"
 import { Portal } from "solid-js/web"
+import { useBrowser } from "@/context/browser"
 import { useCommand } from "@/context/command"
 import { useLanguage } from "@/context/language"
 import { useLayout } from "@/context/layout"
@@ -131,6 +132,7 @@ const showRequestError = (language: ReturnType<typeof useLanguage>, err: unknown
 
 export function SessionHeader() {
   const layout = useLayout()
+  const browser = useBrowser()
   const command = useCommand()
   const server = useServer()
   const platform = usePlatform()
@@ -230,6 +232,12 @@ export function SessionHeader() {
   const [menu, setMenu] = createStore({ open: false })
   const [openRequest, setOpenRequest] = createStore({
     app: undefined as OpenApp | undefined,
+  })
+
+  createEffect(() => {
+    const dir = params.dir ?? ""
+    if (!dir) return
+    browser.setOccluded(dir, "open-menu", menu.open)
   })
 
   const canOpen = createMemo(() => platform.platform === "desktop" && !!platform.openPath && server.isLocal())
@@ -463,7 +471,7 @@ export function SessionHeader() {
 
                 <div class="hidden md:flex items-center gap-1 shrink-0">
                   <Show when={browserAvailable()}>
-                    <TooltipKeybind title={language.t("command.browser.toggle")}>
+                    <Tooltip value={language.t("command.browser.toggle")}>
                       <Button
                         variant="ghost"
                         class="group/browser-toggle titlebar-icon w-8 h-6 p-0 box-border shrink-0"
@@ -474,7 +482,7 @@ export function SessionHeader() {
                       >
                         <Icon size="small" name={view().browser.opened() ? "browser-active" : "browser"} />
                       </Button>
-                    </TooltipKeybind>
+                    </Tooltip>
                   </Show>
                   <TooltipKeybind
                     title={language.t("command.review.toggle")}
