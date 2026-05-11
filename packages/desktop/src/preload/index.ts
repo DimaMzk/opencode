@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron"
-import type { ElectronAPI, InitStep, SqliteMigrationProgress } from "./types"
+import type { BrowserState, ElectronAPI, InitStep, SqliteMigrationProgress } from "./types"
 
 const api: ElectronAPI = {
   killSidecar: () => ipcRenderer.invoke("kill-sidecar"),
@@ -66,6 +66,18 @@ const api: ElectronAPI = {
   checkUpdate: () => ipcRenderer.invoke("check-update"),
   installUpdate: () => ipcRenderer.invoke("install-update"),
   setBackgroundColor: (color: string) => ipcRenderer.invoke("set-background-color", color),
+  browserEnsure: (dir, url) => ipcRenderer.invoke("browser-ensure", dir, url),
+  browserSetBounds: (dir, rect) => ipcRenderer.invoke("browser-set-bounds", dir, rect),
+  browserSetActive: (dir, active) => ipcRenderer.invoke("browser-set-active", dir, active),
+  browserNavigate: (dir, url) => ipcRenderer.invoke("browser-navigate", dir, url),
+  browserBack: (dir) => ipcRenderer.invoke("browser-back", dir),
+  browserForward: (dir) => ipcRenderer.invoke("browser-forward", dir),
+  browserReload: (dir) => ipcRenderer.invoke("browser-reload", dir),
+  onBrowserState: (cb) => {
+    const handler = (_: unknown, state: BrowserState) => cb(state)
+    ipcRenderer.on("browser-state", handler)
+    return () => ipcRenderer.removeListener("browser-state", handler)
+  },
 }
 
 contextBridge.exposeInMainWorld("api", api)

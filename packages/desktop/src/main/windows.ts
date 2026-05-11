@@ -89,23 +89,22 @@ export function createMainWindow() {
     backgroundColor,
     ...(process.platform === "darwin"
       ? {
-          titleBarStyle: "hidden" as const,
-          trafficLightPosition: { x: 12, y: 14 },
-        }
+        titleBarStyle: "hidden" as const,
+        trafficLightPosition: { x: 12, y: 14 },
+      }
       : {}),
     ...(process.platform === "win32"
       ? {
-          frame: false,
-          titleBarStyle: "hidden" as const,
-          titleBarOverlay: overlay({ mode }),
-        }
+        frame: false,
+        titleBarStyle: "hidden" as const,
+        titleBarOverlay: overlay({ mode }),
+      }
       : {}),
     webPreferences: {
       preload: join(root, "../preload/index.js"),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
-      webviewTag: true,
     },
   })
 
@@ -148,10 +147,10 @@ export function createLoadingWindow() {
     ...(process.platform === "darwin" ? { titleBarStyle: "hidden" as const } : {}),
     ...(process.platform === "win32"
       ? {
-          frame: false,
-          titleBarStyle: "hidden" as const,
-          titleBarOverlay: overlay({ mode }),
-        }
+        frame: false,
+        titleBarStyle: "hidden" as const,
+        titleBarOverlay: overlay({ mode }),
+      }
       : {}),
     webPreferences: {
       preload: join(root, "../preload/index.js"),
@@ -202,8 +201,8 @@ function allowClipboardWrite(win: BrowserWindow) {
   win.webContents.session.setPermissionRequestHandler((webContents, permission, callback, details) => {
     callback(
       permission === clipboardWritePermission &&
-        isTrustedRendererUrl(details.requestingUrl) &&
-        webContents.id === win.webContents.id,
+      isTrustedRendererUrl(details.requestingUrl) &&
+      webContents.id === win.webContents.id,
     )
   })
   win.webContents.session.setPermissionCheckHandler((webContents, permission, requestingOrigin, details) => {

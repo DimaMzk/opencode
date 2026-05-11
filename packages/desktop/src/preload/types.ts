@@ -19,6 +19,21 @@ export type WindowConfig = {
   updaterEnabled: boolean
 }
 
+export type BrowserRect = {
+  top: number
+  left: number
+  width: number
+  height: number
+}
+
+export type BrowserState = {
+  dir: string
+  url: string
+  loading: boolean
+  canGoBack: boolean
+  canGoForward: boolean
+}
+
 export type ElectronAPI = {
   killSidecar: () => Promise<void>
   installCli: () => Promise<string>
@@ -76,4 +91,12 @@ export type ElectronAPI = {
   checkUpdate: () => Promise<{ updateAvailable: boolean; version?: string }>
   installUpdate: () => Promise<void>
   setBackgroundColor: (color: string) => Promise<void>
+  browserEnsure: (dir: string, url?: string) => Promise<void>
+  browserSetBounds: (dir: string, rect: BrowserRect) => Promise<void>
+  browserSetActive: (dir: string, active: boolean) => Promise<void>
+  browserNavigate: (dir: string, url: string) => Promise<void>
+  browserBack: (dir: string) => Promise<void>
+  browserForward: (dir: string) => Promise<void>
+  browserReload: (dir: string) => Promise<void>
+  onBrowserState: (cb: (state: BrowserState) => void) => () => void
 }
