@@ -3,6 +3,7 @@ import { createResizeObserver } from "@solid-primitives/resize-observer"
 import { createContext, createEffect, createMemo, createSignal, For, onCleanup, Show, type ParentProps, useContext } from "solid-js"
 import { createStore, reconcile } from "solid-js/store"
 import { Portal } from "solid-js/web"
+import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { useLayout } from "@/context/layout"
 
 const DEFAULT_URL = "about:blank"
@@ -151,6 +152,7 @@ function BrowserNativeView(props: {
 
 export function BrowserProvider(props: ParentProps) {
   const layout = useLayout()
+  const dialog = useDialog()
   const [store, setStore] = createStore({
     dirs: [] as string[],
     viewport: {} as Record<string, HTMLElement | undefined>,
@@ -222,7 +224,7 @@ export function BrowserProvider(props: ParentProps) {
           <BrowserNativeView
             dir={dir}
             active={() => store.active[dir] ?? false}
-            occluded={() => Object.values(store.occluded[dir] ?? {}).some(Boolean)}
+            occluded={() => !!dialog.active || Object.values(store.occluded[dir] ?? {}).some(Boolean)}
             loading={() => store.chrome[dir]?.loading ?? false}
             viewport={() => store.viewport[dir]}
           />
