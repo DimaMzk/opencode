@@ -3,6 +3,7 @@ import { app, BrowserWindow, net, nativeImage, nativeTheme, protocol } from "ele
 import { dirname, isAbsolute, join, relative, resolve } from "node:path"
 import { fileURLToPath, pathToFileURL } from "node:url"
 import type { TitlebarTheme } from "../preload/types"
+import { browserSetZoomFactor } from "./browser"
 
 const root = dirname(fileURLToPath(import.meta.url))
 const rendererRoot = join(root, "../renderer")
@@ -225,6 +226,7 @@ function wireZoom(win: BrowserWindow) {
   win.webContents.setZoomFactor(1)
   win.webContents.on("zoom-changed", () => {
     win.webContents.setZoomFactor(1)
+    browserSetZoomFactor(win)
     updateTitlebar(win)
   })
 }

@@ -1,7 +1,8 @@
 import { makeEventListener } from "@solid-primitives/event-listener"
 import { createResizeObserver } from "@solid-primitives/resize-observer"
-import { createContext, createEffect, createMemo, For, onCleanup, type ParentProps, useContext } from "solid-js"
+import { createContext, createEffect, createMemo, createSignal, For, onCleanup, Show, type ParentProps, useContext } from "solid-js"
 import { createStore, reconcile } from "solid-js/store"
+import { Portal } from "solid-js/web"
 import { useLayout } from "@/context/layout"
 
 const DEFAULT_URL = "about:blank"
@@ -40,13 +41,17 @@ const Browser = createContext<BrowserContext>()
 function BrowserNativeView(props: {
   dir: string
   active: () => boolean
+  occluded: () => boolean
+  loading: () => boolean
   viewport: () => HTMLElement | undefined
 }) {
   const layout = useLayout()
   const view = createMemo(() => layout.view(props.dir))
   const url = createMemo(() => view().browser.url() ?? DEFAULT_URL)
+  const [snapshot, setSnapshot] = createSignal<string | undefined>()
   let lastRect: Rect | undefined
   let loadedUrl: string | undefined
+  let captureRequest = 0
 
   const api = () => window.api
 
@@ -88,6 +93,15 @@ function BrowserNativeView(props: {
     void api()?.browserNavigate?.(props.dir, next)
   }
 
+  const usable = createMemo(() => props.active() && !!props.viewport() && url() !== DEFAULT_URL)
+
+  const refreshSnapshot = async () => {
+    const request = ++captureRequest
+    const next = await api()?.browserCapture?.(props.dir)
+    if (request !== captureRequest || !next) return
+    setSnapshot(next)
+  }
+
   createEffect(() => {
     if (!props.dir) return
     void api()?.browserEnsure?.(props.dir, url())
@@ -95,16 +109,44 @@ function BrowserNativeView(props: {
 
   createEffect(() => {
     updateRect()
-    void api()?.browserSetActive?.(props.dir, props.active() && !!props.viewport() && url() !== DEFAULT_URL)
+    if (usable() && props.occluded() && !snapshot()) void refreshSnapshot()
+    void api()?.browserSetActive?.(props.dir, usable() && !props.occluded())
   })
 
   createEffect(() => loadUrl(url()))
 
+  createEffect(() => {
+    if (!usable()) {
+      captureRequest++
+      setSnapshot(undefined)
+      return
+    }
+
+    if (props.occluded()) return
+
+    if (props.loading()) return
+    void refreshSnapshot()
+  })
+
   onCleanup(() => {
+    captureRequest++
     void api()?.browserSetActive?.(props.dir, false)
   })
 
-  return null
+  return (
+    <Show when={props.occluded() && snapshot() ? props.viewport() : undefined}>
+      {(el) => (
+        <Portal mount={el()}>
+          <img
+            src={snapshot()}
+            alt=""
+            aria-hidden="true"
+            class="absolute inset-0 h-full w-full object-fill pointer-events-none select-none"
+          />
+        </Portal>
+      )}
+    </Show>
+  )
 }
 
 export function BrowserProvider(props: ParentProps) {
@@ -179,7 +221,9 @@ export function BrowserProvider(props: ParentProps) {
         {(dir) => (
           <BrowserNativeView
             dir={dir}
-            active={() => (store.active[dir] ?? false) && !Object.values(store.occluded[dir] ?? {}).some(Boolean)}
+            active={() => store.active[dir] ?? false}
+            occluded={() => Object.values(store.occluded[dir] ?? {}).some(Boolean)}
+            loading={() => store.chrome[dir]?.loading ?? false}
             viewport={() => store.viewport[dir]}
           />
         )}

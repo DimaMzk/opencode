@@ -6,6 +6,25 @@ const DEFAULT_URL = "about:blank"
 const PARTITION = "persist:opencode-browser"
 
 const windows = new WeakMap<BrowserWindow, Map<string, WebContentsView>>()
+const windowBounds = new WeakMap<BrowserWindow, Map<string, BrowserRect>>()
+
+function applyBounds(view: WebContentsView, rect: BrowserRect, zoom: number) {
+    view.setBounds({
+        x: Math.round(rect.left * zoom),
+        y: Math.round(rect.top * zoom),
+        width: Math.max(1, Math.round(rect.width * zoom)),
+        height: Math.max(1, Math.round(rect.height * zoom)),
+    })
+}
+
+function bounds(win: BrowserWindow) {
+    const existing = windowBounds.get(win)
+    if (existing) return existing
+
+    const next = new Map<string, BrowserRect>()
+    windowBounds.set(win, next)
+    return next
+}
 
 function state(dir: string, view: WebContentsView, loading = false): BrowserState {
     return {
@@ -30,6 +49,7 @@ function views(win: BrowserWindow) {
     win.on("closed", () => {
         for (const view of next.values()) view.webContents.close()
         next.clear()
+        windowBounds.get(win)?.clear()
     })
     return next
 }
@@ -50,6 +70,7 @@ function ensure(win: BrowserWindow, dir: string) {
 
     view.setBackgroundColor("#ffffff")
     view.setVisible(false)
+    view.webContents.setZoomFactor(win.webContents.getZoomFactor())
     view.webContents.setWindowOpenHandler((details) => {
         if (URL.canParse(details.url)) {
             const url = new URL(details.url)
@@ -65,7 +86,10 @@ function ensure(win: BrowserWindow, dir: string) {
         send(win, dir, view)
     })
     view.webContents.on("dom-ready", () => send(win, dir, view))
-    view.webContents.on("destroyed", () => map.delete(dir))
+    view.webContents.on("destroyed", () => {
+        map.delete(dir)
+        windowBounds.get(win)?.delete(dir)
+    })
 
     win.contentView.addChildView(view)
     map.set(dir, view)
@@ -89,12 +113,24 @@ export function browserSetBounds(event: IpcMainInvokeEvent, dir: string, rect: B
     const win = windowFrom(event)
     if (!win || !dir) return
 
-    ensure(win, dir).setBounds({
-        x: Math.round(rect.left),
-        y: Math.round(rect.top),
-        width: Math.max(1, Math.round(rect.width)),
-        height: Math.max(1, Math.round(rect.height)),
-    })
+    bounds(win).set(dir, rect)
+    applyBounds(ensure(win, dir), rect, win.webContents.getZoomFactor())
+}
+
+export async function browserCapture(event: IpcMainInvokeEvent, dir: string) {
+    const win = windowFrom(event)
+    const view = win && views(win).get(dir)
+    if (!view) return null
+
+    return (await view.webContents.capturePage()).toDataURL()
+}
+
+export function browserSetZoomFactor(win: BrowserWindow, factor = win.webContents.getZoomFactor()) {
+    for (const [dir, view] of views(win)) {
+        view.webContents.setZoomFactor(factor)
+        const rect = bounds(win).get(dir)
+        if (rect) applyBounds(view, rect, factor)
+    }
 }
 
 export function browserSetActive(event: IpcMainInvokeEvent, dir: string, active: boolean) {

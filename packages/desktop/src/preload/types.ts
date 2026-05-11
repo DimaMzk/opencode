@@ -95,6 +95,7 @@ export type ElectronAPI = {
   setBackgroundColor: (color: string) => Promise<void>
   browserEnsure: (dir: string, url?: string) => Promise<void>
   browserSetBounds: (dir: string, rect: BrowserRect) => Promise<void>
+  browserCapture: (dir: string) => Promise<string | null>
   browserSetActive: (dir: string, active: boolean) => Promise<void>
   browserNavigate: (dir: string, url: string) => Promise<void>
   browserBack: (dir: string) => Promise<void>

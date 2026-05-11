@@ -16,6 +16,7 @@ import { getStore } from "./store"
 import { setTitlebar, updateTitlebar } from "./windows"
 import {
   browserBack,
+  browserCapture,
   browserEnsure,
   browserForward,
   browserNavigate,
@@ -23,6 +24,7 @@ import {
   browserReload,
   browserSetActive,
   browserSetBounds,
+  browserSetZoomFactor,
 } from "./browser"
 
 const pickerFilters = (ext?: string[]) => {
@@ -85,6 +87,7 @@ export function registerIpcHandlers(deps: Deps) {
   ipcMain.handle("browser-set-bounds", (event: IpcMainInvokeEvent, dir: string, rect: BrowserRect) =>
     browserSetBounds(event, dir, rect),
   )
+  ipcMain.handle("browser-capture", (event: IpcMainInvokeEvent, dir: string) => browserCapture(event, dir))
   ipcMain.handle("browser-set-active", (event: IpcMainInvokeEvent, dir: string, active: boolean) =>
     browserSetActive(event, dir, active),
   )
@@ -219,6 +222,7 @@ export function registerIpcHandlers(deps: Deps) {
     event.sender.setZoomFactor(factor)
     const win = BrowserWindow.fromWebContents(event.sender)
     if (!win) return
+    browserSetZoomFactor(win, factor)
     updateTitlebar(win)
   })
   ipcMain.handle("set-titlebar", (event: IpcMainInvokeEvent, theme: TitlebarTheme) => {

@@ -68,6 +68,7 @@ const api: ElectronAPI = {
   setBackgroundColor: (color: string) => ipcRenderer.invoke("set-background-color", color),
   browserEnsure: (dir, url) => ipcRenderer.invoke("browser-ensure", dir, url),
   browserSetBounds: (dir, rect) => ipcRenderer.invoke("browser-set-bounds", dir, rect),
+  browserCapture: (dir) => ipcRenderer.invoke("browser-capture", dir),
   browserSetActive: (dir, active) => ipcRenderer.invoke("browser-set-active", dir, active),
   browserNavigate: (dir, url) => ipcRenderer.invoke("browser-navigate", dir, url),
   browserBack: (dir) => ipcRenderer.invoke("browser-back", dir),
