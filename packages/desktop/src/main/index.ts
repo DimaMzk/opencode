@@ -13,6 +13,8 @@ import contextMenu from "electron-context-menu"
 
 import type { InitStep, ServerReadyData, SqliteMigrationProgress, WslConfig } from "../preload/types"
 import { checkAppExists, resolveAppPath, wslPath } from "./apps"
+import { startBrowserMcpBridge, type BrowserMcpBridge } from "./browser-mcp"
+import { browserSetMcpRegistration } from "./browser"
 import { CHANNEL, UPDATER_ENABLED } from "./constants"
 import { registerIpcHandlers, sendDeepLinks, sendMenuCommand, sendSqliteMigrationProgress } from "./ipc"
 import { initLogging } from "./logging"
@@ -53,6 +55,7 @@ const TEST_ONBOARDING = process.env.OPENCODE_TEST_ONBOARDING === "1"
 let logger: ReturnType<typeof initLogging>
 let mainWindow: BrowserWindow | null = null
 let server: SidecarListener | null = null
+let browserMcpBridge: BrowserMcpBridge | null = null
 
 const initEmitter = new EventEmitter()
 let initStep: InitStep = { phase: "server_waiting" }
@@ -81,6 +84,12 @@ function setInitStep(step: InitStep) {
 }
 
 async function killSidecar() {
+  browserSetMcpRegistration(undefined)
+  if (browserMcpBridge) {
+    const current = browserMcpBridge
+    browserMcpBridge = null
+    await current.stop().catch((error) => logger.warn("failed to stop browser mcp bridge", error))
+  }
   if (!server) return
   const current = server
   server = null
@@ -326,6 +335,43 @@ const main = Effect.gen(function* () {
         }),
       ),
     )
+
+    browserMcpBridge = yield* Effect.promise(() => startBrowserMcpBridge()).pipe(
+      Effect.catch((error) =>
+        Effect.sync(() => {
+          logger.warn("failed to start browser mcp bridge", error)
+          return null
+        }),
+      ),
+    )
+    if (browserMcpBridge) {
+      const bridge = browserMcpBridge
+      browserSetMcpRegistration({
+        register: async ({ dir, directory }) => {
+          const endpoint = new URL("/mcp", url)
+          endpoint.searchParams.set("directory", directory)
+          const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+              authorization: `Basic ${Buffer.from(`opencode:${password}`).toString("base64")}`,
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({
+              name: "desktop_browser",
+              config: {
+                type: "remote",
+                url: bridge.urlFor(dir),
+                headers: { authorization: `Bearer ${bridge.token}` },
+                enabled: true,
+                timeout: 30_000,
+              },
+            }),
+          })
+          if (!response.ok) throw new Error(`Failed to register desktop browser MCP: ${response.status}`)
+          logger.log("registered browser mcp", { directory })
+        },
+      })
+    }
 
     logger.log("loading task finished")
   }).pipe(Effect.forkChild)

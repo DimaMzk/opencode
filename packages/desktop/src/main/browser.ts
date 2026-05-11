@@ -7,6 +7,42 @@ const PARTITION = "persist:opencode-browser"
 
 const windows = new WeakMap<BrowserWindow, Map<string, WebContentsView>>()
 const windowBounds = new WeakMap<BrowserWindow, Map<string, BrowserRect>>()
+const activeWindows = new Set<BrowserWindow>()
+
+export type BrowserAutomationTarget = {
+    dir: string
+    directory?: string
+    view: WebContentsView
+}
+
+type BrowserMcpRegistration = {
+    register: (target: { dir: string; directory: string }) => Promise<void>
+}
+
+let mcpRegistration: BrowserMcpRegistration | undefined
+const mcpRegisteredDirs = new Set<string>()
+
+function decodeDirKey(dir: string) {
+    try {
+        const binary = atob(dir.replace(/-/g, "+").replace(/_/g, "/"))
+        const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0))
+        return new TextDecoder().decode(bytes)
+    } catch {
+        return undefined
+    }
+}
+
+function maybeRegisterMcp(dir: string) {
+    if (!mcpRegistration || mcpRegisteredDirs.has(dir)) return
+
+    const directory = decodeDirKey(dir)
+    if (!directory) return
+
+    mcpRegisteredDirs.add(dir)
+    void mcpRegistration.register({ dir, directory }).catch(() => {
+        mcpRegisteredDirs.delete(dir)
+    })
+}
 
 function applyBounds(view: WebContentsView, rect: BrowserRect, zoom: number) {
     view.setBounds({
@@ -45,8 +81,10 @@ function views(win: BrowserWindow) {
     if (existing) return existing
 
     const next = new Map<string, WebContentsView>()
+    activeWindows.add(win)
     windows.set(win, next)
     win.on("closed", () => {
+        activeWindows.delete(win)
         for (const view of next.values()) view.webContents.close()
         next.clear()
         windowBounds.get(win)?.clear()
@@ -93,7 +131,34 @@ function ensure(win: BrowserWindow, dir: string) {
 
     win.contentView.addChildView(view)
     map.set(dir, view)
+    maybeRegisterMcp(dir)
     return view
+}
+
+export function browserAutomationTargets(): BrowserAutomationTarget[] {
+    const result: BrowserAutomationTarget[] = []
+    for (const win of activeWindows) {
+        const map = windows.get(win)
+        if (!map) continue
+        for (const [dir, view] of map) {
+            if (view.webContents.isDestroyed()) continue
+            result.push({ dir, directory: decodeDirKey(dir), view })
+        }
+    }
+    return result
+}
+
+export function browserAutomationTarget(dir: string): BrowserAutomationTarget | undefined {
+    for (const target of browserAutomationTargets()) {
+        if (target.dir === dir || target.directory === dir) return target
+    }
+}
+
+export function browserSetMcpRegistration(registration: BrowserMcpRegistration | undefined) {
+    mcpRegistration = registration
+    mcpRegisteredDirs.clear()
+    if (!registration) return
+    for (const target of browserAutomationTargets()) maybeRegisterMcp(target.dir)
 }
 
 function windowFrom(event: IpcMainInvokeEvent) {
