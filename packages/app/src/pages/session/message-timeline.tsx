@@ -105,9 +105,9 @@ const messageComments = (parts: Part[]): MessageComment[] =>
         comment: next.comment,
         selection: next.selection
           ? {
-              startLine: next.selection.startLine,
-              endLine: next.selection.endLine,
-            }
+            startLine: next.selection.startLine,
+            endLine: next.selection.endLine,
+          }
           : undefined,
       },
     ]

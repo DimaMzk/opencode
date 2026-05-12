@@ -104,4 +104,4 @@ declare global {
   }
 }
 
-export {}
+export { }

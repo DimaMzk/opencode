@@ -285,77 +285,77 @@ export const BROWSER_ANNOTATION_SCRIPT = `
 `
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
+    return typeof value === "object" && value !== null && !Array.isArray(value)
 }
 
 function string(value: unknown) {
-  return typeof value === "string" && value ? value : undefined
+    return typeof value === "string" && value ? value : undefined
 }
 
 function number(value: unknown) {
-  return typeof value === "number" && Number.isFinite(value) ? value : undefined
+    return typeof value === "number" && Number.isFinite(value) ? value : undefined
 }
 
 function stringMap(value: unknown) {
-  if (!isRecord(value)) return {}
-  return Object.fromEntries(
-    Object.entries(value).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
-  )
+    if (!isRecord(value)) return {}
+    return Object.fromEntries(
+        Object.entries(value).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
+    )
 }
 
 export function parseBrowserAnnotation(value: unknown): BrowserAnnotation | null {
-  if (!isRecord(value) || !isRecord(value.element)) return null
+    if (!isRecord(value) || !isRecord(value.element)) return null
 
-  const url = string(value.url)
-  const title = typeof value.title === "string" ? value.title : ""
-  const comment = string(value.comment)
-  const tag = string(value.element.tag)
-  if (!url || !comment || !tag) return null
+    const url = string(value.url)
+    const title = typeof value.title === "string" ? value.title : ""
+    const comment = string(value.comment)
+    const tag = string(value.element.tag)
+    if (!url || !comment || !tag) return null
 
-  const rect = isRecord(value.element.rect) ? value.element.rect : {}
-  const viewport = isRecord(value.element.viewport) ? value.element.viewport : {}
-  const ancestry = Array.isArray(value.element.ancestry) ? value.element.ancestry : []
+    const rect = isRecord(value.element.rect) ? value.element.rect : {}
+    const viewport = isRecord(value.element.viewport) ? value.element.viewport : {}
+    const ancestry = Array.isArray(value.element.ancestry) ? value.element.ancestry : []
 
-  return {
-    url,
-    title,
-    comment,
-    element: {
-      selector: string(value.element.selector),
-      xpath: string(value.element.xpath),
-      tag,
-      role: string(value.element.role),
-      name: string(value.element.name),
-      text: string(value.element.text),
-      attributes: stringMap(value.element.attributes),
-      rect: {
-        x: number(rect.x) ?? 0,
-        y: number(rect.y) ?? 0,
-        width: number(rect.width) ?? 0,
-        height: number(rect.height) ?? 0,
-      },
-      viewport: {
-        width: number(viewport.width) ?? 0,
-        height: number(viewport.height) ?? 0,
-        scrollX: number(viewport.scrollX) ?? 0,
-        scrollY: number(viewport.scrollY) ?? 0,
-        devicePixelRatio: number(viewport.devicePixelRatio) ?? 1,
-      },
-      ancestry: ancestry.flatMap((item) => {
-        if (!isRecord(item)) return []
-        const tag = string(item.tag)
-        if (!tag) return []
-        return [
-          {
+    return {
+        url,
+        title,
+        comment,
+        element: {
+            selector: string(value.element.selector),
+            xpath: string(value.element.xpath),
             tag,
-            selector: string(item.selector),
-            text: string(item.text),
-            attributes: stringMap(item.attributes),
-          },
-        ]
-      }),
-      nearbyText: string(value.element.nearbyText),
-      closestHeading: string(value.element.closestHeading),
-    },
-  }
+            role: string(value.element.role),
+            name: string(value.element.name),
+            text: string(value.element.text),
+            attributes: stringMap(value.element.attributes),
+            rect: {
+                x: number(rect.x) ?? 0,
+                y: number(rect.y) ?? 0,
+                width: number(rect.width) ?? 0,
+                height: number(rect.height) ?? 0,
+            },
+            viewport: {
+                width: number(viewport.width) ?? 0,
+                height: number(viewport.height) ?? 0,
+                scrollX: number(viewport.scrollX) ?? 0,
+                scrollY: number(viewport.scrollY) ?? 0,
+                devicePixelRatio: number(viewport.devicePixelRatio) ?? 1,
+            },
+            ancestry: ancestry.flatMap((item) => {
+                if (!isRecord(item)) return []
+                const tag = string(item.tag)
+                if (!tag) return []
+                return [
+                    {
+                        tag,
+                        selector: string(item.selector),
+                        text: string(item.text),
+                        attributes: stringMap(item.attributes),
+                    },
+                ]
+            }),
+            nearbyText: string(value.element.nearbyText),
+            closestHeading: string(value.element.closestHeading),
+        },
+    }
 }

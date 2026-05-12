@@ -365,9 +365,9 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
         selection ??
         (item.selection
           ? ({
-              start: item.selection.startLine,
-              end: item.selection.endLine,
-            } satisfies SelectedLineRange)
+            start: item.selection.startLine,
+            end: item.selection.endLine,
+          } satisfies SelectedLineRange)
           : undefined)
       if (!nextSelection) return []
 
