@@ -1,10 +1,21 @@
 import { makeEventListener } from "@solid-primitives/event-listener"
 import { createResizeObserver } from "@solid-primitives/resize-observer"
-import { createContext, createEffect, createMemo, createSignal, For, onCleanup, Show, type ParentProps, useContext } from "solid-js"
+import {
+  createContext,
+  createEffect,
+  createMemo,
+  createSignal,
+  For,
+  onCleanup,
+  Show,
+  type ParentProps,
+  useContext,
+} from "solid-js"
 import { createStore, reconcile } from "solid-js/store"
 import { Portal } from "solid-js/web"
 import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { useLayout } from "@/context/layout"
+import type { BrowserAnnotation } from "@/context/prompt"
 
 const DEFAULT_URL = "about:blank"
 
@@ -34,6 +45,7 @@ type BrowserContext = {
   forward: (dir: string) => void
   reload: (dir: string) => void
   devTools: (dir: string, mode: BrowserDevToolsMode) => void
+  annotate: (dir: string) => Promise<BrowserAnnotation | null>
 }
 
 const defaultChrome = { loading: false, canGoBack: false, canGoForward: false }
@@ -170,11 +182,15 @@ export function BrowserProvider(props: ParentProps) {
     const cleanup = window.api.onBrowserState((state) => {
       ensure(state.dir)
       layout.view(state.dir).browser.setUrl(state.url)
-      setStore("chrome", state.dir, reconcile({
-        loading: state.loading,
-        canGoBack: state.canGoBack,
-        canGoForward: state.canGoForward,
-      }))
+      setStore(
+        "chrome",
+        state.dir,
+        reconcile({
+          loading: state.loading,
+          canGoBack: state.canGoBack,
+          canGoForward: state.canGoForward,
+        }),
+      )
     })
     onCleanup(cleanup)
   }
@@ -213,6 +229,9 @@ export function BrowserProvider(props: ParentProps) {
     },
     devTools(dir, mode) {
       void window.api?.browserOpenDevTools?.(dir, mode)
+    },
+    annotate(dir) {
+      return window.api?.browserAnnotate?.(dir) ?? Promise.resolve(null)
     },
   }
 

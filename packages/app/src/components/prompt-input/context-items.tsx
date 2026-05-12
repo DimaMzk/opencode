@@ -1,5 +1,6 @@
 import { Component, For, Show } from "solid-js"
 import { FileIcon } from "@opencode-ai/ui/file-icon"
+import { Icon } from "@opencode-ai/ui/icon"
 import { IconButton } from "@opencode-ai/ui/icon-button"
 import { Tooltip } from "@opencode-ai/ui/tooltip"
 import { getDirectory, getFilename, getFilenameTruncated } from "@opencode-ai/core/util/path"
@@ -21,6 +22,37 @@ export const PromptContextItems: Component<ContextItemsProps> = (props) => {
       <div class="flex flex-nowrap items-start gap-2 p-2 overflow-x-auto no-scrollbar">
         <For each={props.items}>
           {(item) => {
+            if (item.type === "browser") {
+              const url = URL.canParse(item.url) ? new URL(item.url) : undefined
+              const label = url ? url.host : item.url
+              const target = item.element.name ?? item.element.text ?? item.element.selector ?? item.element.tag
+
+              return (
+                <Tooltip value={item.url} placement="top" openDelay={2000}>
+                  <div class="group shrink-0 flex flex-col rounded-[6px] pl-2 pr-1 py-1 max-w-[220px] h-12 cursor-default transition-all transition-transform shadow-xs-border hover:shadow-xs-border-hover bg-background-stronger">
+                    <div class="flex items-center gap-1.5">
+                      <Icon name="window-cursor" size="small" class="shrink-0 text-text-weak" />
+                      <div class="flex items-center text-11-regular min-w-0 font-medium">
+                        <span class="text-text-strong whitespace-nowrap truncate">{label}</span>
+                      </div>
+                      <IconButton
+                        type="button"
+                        icon="close-small"
+                        variant="ghost"
+                        class="ml-auto size-3.5 text-text-weak hover:text-text-strong transition-all"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          props.remove(item)
+                        }}
+                        aria-label={props.t("prompt.context.removeBrowserAnnotation")}
+                      />
+                    </div>
+                    <div class="text-12-regular text-text-strong ml-5 pr-1 truncate">{target}</div>
+                  </div>
+                </Tooltip>
+              )
+            }
+
             const directory = getDirectory(item.path)
             const filename = getFilename(item.path)
             const label = getFilenameTruncated(item.path, 14)

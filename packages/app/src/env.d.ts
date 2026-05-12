@@ -37,6 +37,52 @@ type BrowserState = {
   canGoForward: boolean
 }
 
+type BrowserAnnotationAttributeMap = Record<string, string>
+
+type BrowserAnnotationRect = {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+type BrowserAnnotationViewport = {
+  width: number
+  height: number
+  scrollX: number
+  scrollY: number
+  devicePixelRatio: number
+}
+
+type BrowserAnnotationAncestor = {
+  tag: string
+  selector?: string
+  text?: string
+  attributes: BrowserAnnotationAttributeMap
+}
+
+type BrowserAnnotationElement = {
+  selector?: string
+  xpath?: string
+  tag: string
+  role?: string
+  name?: string
+  text?: string
+  attributes: BrowserAnnotationAttributeMap
+  rect: BrowserAnnotationRect
+  viewport: BrowserAnnotationViewport
+  ancestry: BrowserAnnotationAncestor[]
+  nearbyText?: string
+  closestHeading?: string
+}
+
+type BrowserAnnotation = {
+  url: string
+  title: string
+  comment: string
+  element: BrowserAnnotationElement
+}
+
 type BrowserDevToolsMode = "right" | "bottom" | "detach"
 
 declare global {
@@ -52,9 +98,10 @@ declare global {
       browserForward?: (dir: string) => Promise<void>
       browserReload?: (dir: string) => Promise<void>
       browserOpenDevTools?: (dir: string, mode: BrowserDevToolsMode) => Promise<void>
+      browserAnnotate?: (dir: string) => Promise<BrowserAnnotation | null>
       onBrowserState?: (cb: (state: BrowserState) => void) => () => void
     }
   }
 }
 
-export { }
+export {}

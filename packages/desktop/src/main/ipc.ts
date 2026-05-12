@@ -15,6 +15,7 @@ import type {
 import { getStore } from "./store"
 import { setTitlebar, updateTitlebar } from "./windows"
 import {
+  browserAnnotate,
   browserBack,
   browserCapture,
   browserEnsure,
@@ -83,7 +84,9 @@ export function registerIpcHandlers(deps: Deps) {
   ipcMain.handle("check-update", () => deps.checkUpdate())
   ipcMain.handle("install-update", () => deps.installUpdate())
   ipcMain.handle("set-background-color", (_event: IpcMainInvokeEvent, color: string) => deps.setBackgroundColor(color))
-  ipcMain.handle("browser-ensure", (event: IpcMainInvokeEvent, dir: string, url?: string) => browserEnsure(event, dir, url))
+  ipcMain.handle("browser-ensure", (event: IpcMainInvokeEvent, dir: string, url?: string) =>
+    browserEnsure(event, dir, url),
+  )
   ipcMain.handle("browser-set-bounds", (event: IpcMainInvokeEvent, dir: string, rect: BrowserRect) =>
     browserSetBounds(event, dir, rect),
   )
@@ -100,6 +103,7 @@ export function registerIpcHandlers(deps: Deps) {
   ipcMain.handle("browser-open-dev-tools", (event: IpcMainInvokeEvent, dir: string, mode: BrowserDevToolsMode) =>
     browserOpenDevTools(event, dir, mode),
   )
+  ipcMain.handle("browser-annotate", (event: IpcMainInvokeEvent, dir: string) => browserAnnotate(event, dir))
   ipcMain.handle("store-get", (_event: IpcMainInvokeEvent, name: string, key: string) => {
     try {
       const store = getStore(name)

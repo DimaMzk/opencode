@@ -163,6 +163,7 @@ export const dict = {
   "browser.devTools.right": "Dock right",
   "browser.devTools.bottom": "Dock bottom",
   "browser.devTools.window": "Separate window",
+  "browser.annotate": "Annotate page",
 
   "provider.custom.title": "Custom provider",
   "provider.custom.description.prefix": "Configure an OpenAI-compatible provider. See the ",
@@ -615,6 +616,7 @@ export const dict = {
   "browser.go": "Go",
   "browser.close": "Close browser",
   "browser.url.placeholder": "Search or enter address",
+  "prompt.context.removeBrowserAnnotation": "Remove browser annotation",
 
   "status.popover.trigger": "Status",
   "status.popover.ariaLabel": "Server configurations",

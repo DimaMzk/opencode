@@ -48,7 +48,57 @@ export type FileContextItem = {
   preview?: string
 }
 
-export type ContextItem = FileContextItem
+export type BrowserAnnotationAttributeMap = Record<string, string>
+
+export type BrowserAnnotationRect = {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+export type BrowserAnnotationViewport = {
+  width: number
+  height: number
+  scrollX: number
+  scrollY: number
+  devicePixelRatio: number
+}
+
+export type BrowserAnnotationAncestor = {
+  tag: string
+  selector?: string
+  text?: string
+  attributes: BrowserAnnotationAttributeMap
+}
+
+export type BrowserAnnotationElement = {
+  selector?: string
+  xpath?: string
+  tag: string
+  role?: string
+  name?: string
+  text?: string
+  attributes: BrowserAnnotationAttributeMap
+  rect: BrowserAnnotationRect
+  viewport: BrowserAnnotationViewport
+  ancestry: BrowserAnnotationAncestor[]
+  nearbyText?: string
+  closestHeading?: string
+}
+
+export type BrowserAnnotation = {
+  url: string
+  title: string
+  comment: string
+  element: BrowserAnnotationElement
+}
+
+export type BrowserContextItem = BrowserAnnotation & {
+  type: "browser"
+}
+
+export type ContextItem = FileContextItem | BrowserContextItem
 
 export const DEFAULT_PROMPT: Prompt = [{ type: "text", content: "", start: 0, end: 0 }]
 
@@ -101,7 +151,12 @@ function clonePrompt(prompt: Prompt): Prompt {
 }
 
 function contextItemKey(item: ContextItem) {
-  if (item.type !== "file") return item.type
+  if (item.type === "browser") {
+    const selector = item.element.selector ?? item.element.xpath ?? item.element.tag
+    const digest = checksum(item.comment) ?? item.comment
+    return `${item.type}:${item.url}:${selector}:c=${digest.slice(0, 8)}`
+  }
+
   const start = item.selection?.startLine
   const end = item.selection?.endLine
   const key = `${item.type}:${item.path}:${start}:${end}`

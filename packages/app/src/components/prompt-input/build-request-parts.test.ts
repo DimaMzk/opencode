@@ -124,6 +124,52 @@ describe("buildRequestParts", () => {
     expect(files.some((part) => part.type === "file" && part.url === "file:///repo/src/shared.ts")).toBe(true)
   })
 
+  test("adds synthetic context for browser annotations", () => {
+    const result = buildRequestParts({
+      prompt: [{ type: "text", content: "fix this", start: 0, end: 8 }],
+      context: [
+        {
+          key: "browser:1",
+          type: "browser",
+          url: "http://localhost:5173/settings",
+          title: "Settings",
+          comment: "Disable this until a setting changes. Compare @src/settings.tsx",
+          element: {
+            tag: "button",
+            role: "button",
+            name: "Save settings",
+            text: "Save",
+            selector: 'button[data-testid=\\"save-settings\\"]',
+            attributes: { "data-testid": "save-settings", type: "submit" },
+            rect: { x: 10, y: 20, width: 100, height: 32 },
+            viewport: { width: 1200, height: 800, scrollX: 0, scrollY: 0, devicePixelRatio: 2 },
+            ancestry: [],
+            closestHeading: "Workspace settings",
+          },
+        },
+      ],
+      images: [],
+      text: "fix this",
+      messageID: "msg_browser_annotation",
+      sessionID: "ses_browser_annotation",
+      sessionDirectory: "/repo",
+    })
+
+    expect(
+      result.requestParts.some(
+        (part) =>
+          part.type === "text" &&
+          part.synthetic &&
+          part.text.includes("The user annotated an element in the embedded browser.") &&
+          part.text.includes("Save settings") &&
+          part.metadata?.opencodeBrowserAnnotation,
+      ),
+    ).toBe(true)
+    expect(
+      result.requestParts.some((part) => part.type === "file" && part.url === "file:///repo/src/settings.tsx"),
+    ).toBe(true)
+  })
+
   test("handles Windows paths correctly (simulated on macOS)", () => {
     const prompt: Prompt = [{ type: "file", path: "src\\foo.ts", content: "@src\\foo.ts", start: 0, end: 11 }]
 

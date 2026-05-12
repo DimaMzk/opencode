@@ -34,7 +34,8 @@ import { sessionTitle } from "@/utils/session-title"
 import { parseCommentNote, readCommentMetadata } from "@/utils/comment-note"
 import { makeTimer } from "@solid-primitives/timer"
 
-type MessageComment = {
+type MessageFileComment = {
+  type: "file"
   path: string
   comment: string
   selection?: {
@@ -43,6 +44,16 @@ type MessageComment = {
   }
 }
 
+type MessageBrowserComment = {
+  type: "browser"
+  url: string
+  title?: string
+  target: string
+  comment: string
+}
+
+type MessageComment = MessageFileComment | MessageBrowserComment
+
 const emptyMessages: MessageType[] = []
 const idle = { type: "idle" as const }
 type UserActions = {
@@ -50,13 +61,46 @@ type UserActions = {
   revert?: (input: { sessionID: string; messageID: string }) => Promise<void> | void
 }
 
+const readBrowserAnnotationMetadata = (value: unknown): MessageBrowserComment | undefined => {
+  if (!value || typeof value !== "object") return
+  const meta = (value as { opencodeBrowserAnnotation?: unknown }).opencodeBrowserAnnotation
+  if (!meta || typeof meta !== "object") return
+  const url = (meta as { url?: unknown }).url
+  const comment = (meta as { comment?: unknown }).comment
+  const title = (meta as { title?: unknown }).title
+  const element = (meta as { element?: unknown }).element
+  if (typeof url !== "string" || typeof comment !== "string" || !element || typeof element !== "object") return
+
+  const target = [
+    (element as { name?: unknown }).name,
+    (element as { text?: unknown }).text,
+    (element as { selector?: unknown }).selector,
+    (element as { tag?: unknown }).tag,
+  ].find((item): item is string => typeof item === "string" && item.length > 0)
+  if (!target) return
+
+  return {
+    type: "browser",
+    url,
+    title: typeof title === "string" && title ? title : undefined,
+    target,
+    comment,
+  }
+}
+
+const browserLabel = (url: string) => (URL.canParse(url) ? new URL(url).host : url)
+
 const messageComments = (parts: Part[]): MessageComment[] =>
-  parts.flatMap((part) => {
+  parts.flatMap((part): MessageComment[] => {
     if (part.type !== "text" || !(part as TextPart).synthetic) return []
+    const browser = readBrowserAnnotationMetadata(part.metadata)
+    if (browser) return [browser]
+
     const next = readCommentMetadata(part.metadata) ?? parseCommentNote(part.text)
     if (!next) return []
     return [
       {
+        type: "file",
         path: next.path,
         comment: next.comment,
         selection: next.selection
@@ -68,6 +112,40 @@ const messageComments = (parts: Part[]): MessageComment[] =>
       },
     ]
   })
+
+function MessageCommentCard(props: { comment: MessageComment }) {
+  if (props.comment.type === "browser") {
+    return (
+      <div class="shrink-0 max-w-[260px] rounded-[6px] border border-border-weak-base bg-background-stronger px-2.5 py-2">
+        <div class="flex items-center gap-1.5 min-w-0 text-11-medium text-text-strong">
+          <Icon name="window-cursor" size="small" class="shrink-0 text-text-weak" />
+          <span class="truncate">{browserLabel(props.comment.url)}</span>
+        </div>
+        <div class="pt-0.5 text-11-regular text-text-weak truncate">{props.comment.target}</div>
+        <div class="pt-1 text-12-regular text-text-strong whitespace-pre-wrap break-words">{props.comment.comment}</div>
+      </div>
+    )
+  }
+
+  return (
+    <div class="shrink-0 max-w-[260px] rounded-[6px] border border-border-weak-base bg-background-stronger px-2.5 py-2">
+      <div class="flex items-center gap-1.5 min-w-0 text-11-medium text-text-strong">
+        <FileIcon node={{ path: props.comment.path, type: "file" }} class="size-3.5 shrink-0" />
+        <span class="truncate">{getFilename(props.comment.path)}</span>
+        <Show when={props.comment.selection}>
+          {(selection) => (
+            <span class="shrink-0 text-text-weak">
+              {selection().startLine === selection().endLine
+                ? `:${selection().startLine}`
+                : `:${selection().startLine}-${selection().endLine}`}
+            </span>
+          )}
+        </Show>
+      </div>
+      <div class="pt-1 text-12-regular text-text-strong whitespace-pre-wrap break-words">{props.comment.comment}</div>
+    </div>
+  )
+}
 
 const taskDescription = (part: Part, sessionID: string) => {
   if (part.type !== "tool" || part.tool !== "task") return
@@ -1027,13 +1105,19 @@ export function MessageTimeline(props: {
                   const comments = createMemo(() => messageComments(sync.data.part[messageID] ?? []), [], {
                     equals: (a, b) =>
                       a.length === b.length &&
-                      a.every(
-                        (c, i) =>
-                          c.path === b[i].path &&
-                          c.comment === b[i].comment &&
-                          c.selection?.startLine === b[i].selection?.startLine &&
-                          c.selection?.endLine === b[i].selection?.endLine,
-                      ),
+                      a.every((c, i) => {
+                        const next = b[i]
+                        if (c.type !== next.type || c.comment !== next.comment) return false
+                        if (c.type === "browser" && next.type === "browser") {
+                          return c.url === next.url && c.title === next.title && c.target === next.target
+                        }
+                        if (c.type !== "file" || next.type !== "file") return false
+                        return (
+                          c.path === next.path &&
+                          c.selection?.startLine === next.selection?.startLine &&
+                          c.selection?.endLine === next.selection?.endLine
+                        )
+                      }),
                   })
                   const commentCount = createMemo(() => comments().length)
                   return (
@@ -1056,33 +1140,7 @@ export function MessageTimeline(props: {
                               <Index each={comments()}>
                                 {(commentAccessor: () => MessageComment) => {
                                   const comment = createMemo(() => commentAccessor())
-                                  return (
-                                    <Show when={comment()}>
-                                      {(c) => (
-                                        <div class="shrink-0 max-w-[260px] rounded-[6px] border border-border-weak-base bg-background-stronger px-2.5 py-2">
-                                          <div class="flex items-center gap-1.5 min-w-0 text-11-medium text-text-strong">
-                                            <FileIcon
-                                              node={{ path: c().path, type: "file" }}
-                                              class="size-3.5 shrink-0"
-                                            />
-                                            <span class="truncate">{getFilename(c().path)}</span>
-                                            <Show when={c().selection}>
-                                              {(selection) => (
-                                                <span class="shrink-0 text-text-weak">
-                                                  {selection().startLine === selection().endLine
-                                                    ? `:${selection().startLine}`
-                                                    : `:${selection().startLine}-${selection().endLine}`}
-                                                </span>
-                                              )}
-                                            </Show>
-                                          </div>
-                                          <div class="pt-1 text-12-regular text-text-strong whitespace-pre-wrap break-words">
-                                            {c().comment}
-                                          </div>
-                                        </div>
-                                      )}
-                                    </Show>
-                                  )
+                                  return <Show when={comment()}>{(c) => <MessageCommentCard comment={c()} />}</Show>
                                 }}
                               </Index>
                             </div>

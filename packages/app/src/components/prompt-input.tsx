@@ -1006,15 +1006,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
         }
 
         for (const item of edit.context) {
-          prompt.context.add({
-            type: item.type,
-            path: item.path,
-            selection: item.selection,
-            comment: item.comment,
-            commentID: item.commentID,
-            commentOrigin: item.commentOrigin,
-            preview: item.preview,
-          })
+          prompt.context.add(item)
         }
 
         setStore("mode", "normal")
@@ -1306,12 +1298,15 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
         <PromptContextItems
           items={contextItems()}
           active={(item) => {
+            if (item.type !== "file") return false
             const active = comments.active()
             return !!item.commentID && item.commentID === active?.id && item.path === active?.file
           }}
-          openComment={openComment}
+          openComment={(item) => {
+            if (item.type === "file") openComment(item)
+          }}
           remove={(item) => {
-            if (item.commentID) comments.remove(item.path, item.commentID)
+            if (item.type === "file" && item.commentID) comments.remove(item.path, item.commentID)
             prompt.context.remove(item.key)
           }}
           t={(key) => language.t(key as Parameters<typeof language.t>[0])}

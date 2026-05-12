@@ -4,7 +4,6 @@ import { base64Encode } from "@opencode-ai/core/util/encode"
 import { Binary } from "@opencode-ai/core/util/binary"
 import { useNavigate, useParams } from "@solidjs/router"
 import { batch, type Accessor } from "solid-js"
-import type { FileSelection } from "@/context/file"
 import { useGlobalSync } from "@/context/global-sync"
 import { useLanguage } from "@/context/language"
 import { useLayout } from "@/context/layout"
@@ -192,15 +191,6 @@ type PromptSubmitInput = {
   onSubmit?: () => void
 }
 
-type CommentItem = {
-  path: string
-  selection?: FileSelection
-  comment?: string
-  commentID?: string
-  commentOrigin?: "review" | "file"
-  preview?: string
-}
-
 export function createPromptSubmit(input: PromptSubmitInput) {
   const navigate = useNavigate()
   const sdk = useSDK()
@@ -246,17 +236,9 @@ export function createPromptSubmit(input: PromptSubmitInput) {
       .catch(() => {})
   }
 
-  const restoreCommentItems = (items: CommentItem[]) => {
+  const restoreContextItems = (items: ContextItem[]) => {
     for (const item of items) {
-      prompt.context.add({
-        type: "file",
-        path: item.path,
-        selection: item.selection,
-        comment: item.comment,
-        commentID: item.commentID,
-        commentOrigin: item.commentOrigin,
-        preview: item.preview,
-      })
+      prompt.context.add(item)
     }
   }
 
@@ -485,7 +467,7 @@ export function createPromptSubmit(input: PromptSubmitInput) {
       }
     }
 
-    const commentItems = context.filter((item) => item.type === "file" && !!item.comment?.trim())
+    const commentItems = context.filter((item) => !!item.comment?.trim())
     const messageID = Identifier.ascending("message")
 
     const removeOptimisticMessage = () => {
@@ -513,7 +495,7 @@ export function createPromptSubmit(input: PromptSubmitInput) {
           sync.set("session_status", session.id, { type: "idle" })
         }
         removeOptimisticMessage()
-        restoreCommentItems(commentItems)
+        restoreContextItems(commentItems)
         restoreInput()
       }
 
@@ -572,7 +554,7 @@ export function createPromptSubmit(input: PromptSubmitInput) {
         description: errorMessage(err),
       })
       removeOptimisticMessage()
-      restoreCommentItems(commentItems)
+      restoreContextItems(commentItems)
       restoreInput()
     })
   }

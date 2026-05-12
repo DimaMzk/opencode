@@ -2,26 +2,15 @@ import { getFilename } from "@opencode-ai/core/util/path"
 import { type AgentPartInput, type FilePartInput, type Part, type TextPartInput } from "@opencode-ai/sdk/v2/client"
 import type { FileSelection } from "@/context/file"
 import { encodeFilePath } from "@/context/file/path"
-import type { AgentPart, FileAttachmentPart, ImageAttachmentPart, Prompt } from "@/context/prompt"
+import type { AgentPart, ContextItem, FileAttachmentPart, ImageAttachmentPart, Prompt } from "@/context/prompt"
 import { Identifier } from "@/utils/id"
 import { createCommentMetadata, formatCommentNote } from "@/utils/comment-note"
 
 type PromptRequestPart = (TextPartInput | FilePartInput | AgentPartInput) & { id: string }
 
-type ContextFile = {
-  key: string
-  type: "file"
-  path: string
-  selection?: FileSelection
-  comment?: string
-  commentID?: string
-  commentOrigin?: "review" | "file"
-  preview?: string
-}
-
 type BuildRequestPartsInput = {
   prompt: Prompt
-  context: ContextFile[]
+  context: (ContextItem & { key: string })[]
   images: ImageAttachmentPart[]
   text: string
   messageID: string
@@ -51,6 +40,34 @@ const parseCommentMentions = (comment: string) => {
 
 const isFileAttachment = (part: Prompt[number]): part is FileAttachmentPart => part.type === "file"
 const isAgentAttachment = (part: Prompt[number]): part is AgentPart => part.type === "agent"
+
+const formatBrowserAnnotationNote = (item: Extract<ContextItem, { type: "browser" }>) => {
+  const attributes = Object.entries(item.element.attributes)
+    .filter((entry) =>
+      ["id", "class", "role", "aria-label", "data-testid", "data-test", "data-cy", "data-qa"].includes(entry[0]),
+    )
+    .map((entry) => `${entry[0]}=${JSON.stringify(entry[1])}`)
+    .join(" ")
+  return [
+    "The user annotated an element in the embedded browser.",
+    `URL: ${item.url}`,
+    item.title ? `Page title: ${item.title}` : undefined,
+    `Element: ${item.element.tag}`,
+    item.element.role ? `Role: ${item.element.role}` : undefined,
+    item.element.name ? `Accessible name: ${item.element.name}` : undefined,
+    item.element.text ? `Visible text: ${item.element.text}` : undefined,
+    item.element.selector ? `CSS selector: ${item.element.selector}` : undefined,
+    item.element.xpath ? `XPath: ${item.element.xpath}` : undefined,
+    attributes ? `Attributes: ${attributes}` : undefined,
+    item.element.closestHeading ? `Nearest heading: ${item.element.closestHeading}` : undefined,
+    item.element.nearbyText ? `Nearby text: ${item.element.nearbyText}` : undefined,
+    `Viewport rect: x=${item.element.rect.x}, y=${item.element.rect.y}, width=${item.element.rect.width}, height=${item.element.rect.height}`,
+    `User comment: ${item.comment}`,
+    "Use the URL, route, text, accessibility labels, data attributes, and selector to locate the corresponding frontend code.",
+  ]
+    .filter((line): line is string => Boolean(line))
+    .join("\n")
+}
 
 const toOptimisticPart = (part: PromptRequestPart, sessionID: string, messageID: string): Part => {
   if (part.type === "text") {
@@ -131,7 +148,35 @@ export function buildRequestParts(input: BuildRequestPartsInput) {
   })
 
   const used = new Set(files.map((part) => part.url))
-  const context = input.context.flatMap((item) => {
+  const context: PromptRequestPart[] = input.context.flatMap((item): PromptRequestPart[] => {
+    if (item.type === "browser") {
+      const mentions = parseCommentMentions(item.comment).flatMap((path) => {
+        const url = `file://${encodeFilePath(absolute(input.sessionDirectory, path))}`
+        if (used.has(url)) return []
+        used.add(url)
+        return [
+          {
+            id: Identifier.ascending("part"),
+            type: "file",
+            mime: "text/plain",
+            url,
+            filename: getFilename(path),
+          } satisfies PromptRequestPart,
+        ]
+      })
+
+      return [
+        {
+          id: Identifier.ascending("part"),
+          type: "text",
+          text: formatBrowserAnnotationNote(item),
+          synthetic: true,
+          metadata: { opencodeBrowserAnnotation: item },
+        } satisfies PromptRequestPart,
+        ...mentions,
+      ]
+    }
+
     const path = absolute(input.sessionDirectory, item.path)
     const url = `file://${encodeFilePath(path)}${fileQuery(item.selection)}`
     const comment = item.comment?.trim()

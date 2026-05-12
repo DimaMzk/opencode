@@ -6,7 +6,9 @@ import { Tooltip } from "@opencode-ai/ui/tooltip"
 import { useBrowser } from "@/context/browser"
 import type { BrowserDevToolsMode } from "@/context/browser"
 import { useLanguage } from "@/context/language"
+import { usePrompt } from "@/context/prompt"
 import { useSessionLayout } from "@/pages/session/session-layout"
+import { showToast } from "@opencode-ai/ui/toast"
 
 const DEFAULT_URL = "about:blank"
 
@@ -33,9 +35,11 @@ const normalizeUrl = (value: string) => {
 export function BrowserPanel(props: { active: Accessor<boolean> }) {
   const browser = useBrowser()
   const language = useLanguage()
+  const prompt = usePrompt()
   const { params, view } = useSessionLayout()
   const [input, setInput] = createSignal(DEFAULT_URL)
   const [devToolsMenuOpen, setDevToolsMenuOpen] = createSignal(false)
+  const [annotating, setAnnotating] = createSignal(false)
   let viewport: HTMLDivElement | undefined
 
   const dir = createMemo(() => params.dir ?? "")
@@ -72,6 +76,24 @@ export function BrowserPanel(props: { active: Accessor<boolean> }) {
     view().browser.setUrl(next)
     setInput(next)
     browser.navigate(dir(), next)
+  }
+
+  const annotate = async () => {
+    const key = dir()
+    if (!key || url() === DEFAULT_URL || annotating()) return
+
+    setAnnotating(true)
+    const annotation = await browser.annotate(key).catch((error) => {
+      showToast({
+        variant: "error",
+        title: language.t("common.requestFailed"),
+        description: error instanceof Error ? error.message : String(error),
+      })
+      return null
+    })
+    setAnnotating(false)
+    if (!annotation) return
+    prompt.context.add({ type: "browser", ...annotation })
   }
 
   return (
@@ -138,6 +160,17 @@ export function BrowserPanel(props: { active: Accessor<boolean> }) {
             </DropdownMenu.Content>
           </DropdownMenu.Portal>
         </DropdownMenu>
+        <Tooltip placement="bottom" value={language.t("browser.annotate")}>
+          <Button
+            variant="ghost"
+            class="w-7 h-7 p-0 shrink-0"
+            disabled={url() === DEFAULT_URL || annotating()}
+            onClick={() => void annotate()}
+            aria-label={language.t("browser.annotate")}
+          >
+            <Icon name="window-cursor" size="small" classList={{ "animate-pulse": annotating() }} />
+          </Button>
+        </Tooltip>
         <form
           class="flex-1 min-w-0"
           onSubmit={(event) => {

@@ -1,6 +1,7 @@
 import { BrowserWindow, WebContentsView, shell } from "electron"
 import type { IpcMainInvokeEvent } from "electron"
 import type { BrowserDevToolsMode, BrowserRect, BrowserState } from "../preload/types"
+import { BROWSER_ANNOTATION_SCRIPT, parseBrowserAnnotation } from "./browser-annotation"
 
 const DEFAULT_URL = "about:blank"
 const PARTITION = "persist:opencode-browser"
@@ -250,4 +251,16 @@ export function browserOpenDevTools(event: IpcMainInvokeEvent, dir: string, mode
   if (view.webContents.isDevToolsOpened()) view.webContents.closeDevTools()
 
   view.webContents.openDevTools({ mode })
+}
+
+export async function browserAnnotate(event: IpcMainInvokeEvent, dir: string) {
+  const win = windowFrom(event)
+  const view = win && views(win).get(dir)
+  if (!view || view.webContents.isDestroyed()) return null
+
+  const result = await view.webContents.executeJavaScript(BROWSER_ANNOTATION_SCRIPT, true).catch((error) => {
+    console.warn("[opencode] Browser annotation script failed", error)
+    return null
+  })
+  return parseBrowserAnnotation(result)
 }

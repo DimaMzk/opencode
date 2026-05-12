@@ -34,6 +34,52 @@ export type BrowserState = {
   canGoForward: boolean
 }
 
+export type BrowserAnnotationAttributeMap = Record<string, string>
+
+export type BrowserAnnotationRect = {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+export type BrowserAnnotationViewport = {
+  width: number
+  height: number
+  scrollX: number
+  scrollY: number
+  devicePixelRatio: number
+}
+
+export type BrowserAnnotationAncestor = {
+  tag: string
+  selector?: string
+  text?: string
+  attributes: BrowserAnnotationAttributeMap
+}
+
+export type BrowserAnnotationElement = {
+  selector?: string
+  xpath?: string
+  tag: string
+  role?: string
+  name?: string
+  text?: string
+  attributes: BrowserAnnotationAttributeMap
+  rect: BrowserAnnotationRect
+  viewport: BrowserAnnotationViewport
+  ancestry: BrowserAnnotationAncestor[]
+  nearbyText?: string
+  closestHeading?: string
+}
+
+export type BrowserAnnotation = {
+  url: string
+  title: string
+  comment: string
+  element: BrowserAnnotationElement
+}
+
 export type BrowserDevToolsMode = "right" | "bottom" | "detach"
 
 export type ElectronAPI = {
@@ -102,5 +148,6 @@ export type ElectronAPI = {
   browserForward: (dir: string) => Promise<void>
   browserReload: (dir: string) => Promise<void>
   browserOpenDevTools: (dir: string, mode: BrowserDevToolsMode) => Promise<void>
+  browserAnnotate: (dir: string) => Promise<BrowserAnnotation | null>
   onBrowserState: (cb: (state: BrowserState) => void) => () => void
 }
