@@ -89,6 +89,27 @@ describe("worktree endpoint reproduction", () => {
   )
 
   it.instance(
+    "direct HttpApi worktree create accepts an empty body",
+    () =>
+      Effect.gen(function* () {
+        const test = yield* TestInstance
+        const server = yield* serverScoped()
+
+        const response = yield* withRequestTimeout(
+          request(server, `${ExperimentalPaths.worktree}?directory=${encodeURIComponent(test.directory)}`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+          }),
+          "direct worktree create without body",
+        )
+
+        expect(response.status).toBe(200)
+        expect(yield* Effect.promise(() => response.json())).toMatchObject({ directory: expect.any(String) })
+      }),
+    { git: true },
+  )
+
+  it.instance(
     "workspace worktree create does not hang",
     () =>
       Effect.gen(function* () {
