@@ -12,7 +12,13 @@ import { Effect, Option, Schema } from "effect"
 import { HttpServerRequest, HttpServerResponse } from "effect/unstable/http"
 import { HttpApiBuilder, HttpApiError } from "effect/unstable/httpapi"
 import { InstanceHttpApi } from "../api"
-import { ConsoleSwitchPayload, SessionListQuery, ToolListQuery } from "../groups/experimental"
+import { ConsoleSwitchPayload, SessionListQuery, ToolListQuery, WorktreeApiError } from "../groups/experimental"
+
+function mapWorktreeError<A, R>(self: Effect.Effect<A, Worktree.Error, R>) {
+  return self.pipe(
+    Effect.mapError((error) => new WorktreeApiError({ name: error._tag, data: { message: error.message } })),
+  )
+}
 
 export const experimentalHandlers = HttpApiBuilder.group(InstanceHttpApi, "experimental", (handlers) =>
   Effect.gen(function* () {
@@ -100,7 +106,7 @@ export const experimentalHandlers = HttpApiBuilder.group(InstanceHttpApi, "exper
     const worktreeCreate = Effect.fn("ExperimentalHttpApi.worktreeCreate")(function* (ctx: {
       payload: Worktree.CreateInput | undefined
     }) {
-      return yield* worktreeSvc.create(ctx.payload)
+      return yield* mapWorktreeError(worktreeSvc.create(ctx.payload))
     })
 
     const worktreeCreateRaw = Effect.fn("ExperimentalHttpApi.worktreeCreateRaw")(function* (ctx: {
@@ -123,7 +129,7 @@ export const experimentalHandlers = HttpApiBuilder.group(InstanceHttpApi, "exper
       payload: Worktree.RemoveInput
     }) {
       const ctx = yield* InstanceState.context
-      yield* worktreeSvc.remove(input.payload)
+      yield* mapWorktreeError(worktreeSvc.remove(input.payload))
       yield* project.removeSandbox(ctx.project.id, input.payload.directory)
       return true
     })
@@ -131,7 +137,7 @@ export const experimentalHandlers = HttpApiBuilder.group(InstanceHttpApi, "exper
     const worktreeReset = Effect.fn("ExperimentalHttpApi.worktreeReset")(function* (ctx: {
       payload: Worktree.ResetInput
     }) {
-      yield* worktreeSvc.reset(ctx.payload)
+      yield* mapWorktreeError(worktreeSvc.reset(ctx.payload))
       return true
     })
 
