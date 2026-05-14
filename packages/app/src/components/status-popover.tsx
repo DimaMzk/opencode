@@ -18,12 +18,14 @@ export function StatusPopover() {
   const { params } = useSessionLayout()
   const [shown, setShown] = createSignal(false)
   const ready = createMemo(() => server.healthy() === false || sync.data.mcp_ready)
-  const healthy = createMemo(() => {
-    const serverHealthy = server.healthy() === true
+  const mcpIssue = createMemo(() => {
     const mcp = Object.values(sync.data.mcp ?? {})
-    const issue = mcp.some((item) => item.status !== "connected" && item.status !== "disabled")
-    return serverHealthy && !issue
+    const failed = mcp.some((item) => item.status === "failed" || item.status === "needs_client_registration")
+    const warn = mcp.some((item) => item.status === "needs_auth")
+    if (failed) return "critical" as const
+    if (warn) return "warning" as const
   })
+  const healthy = createMemo(() => server.healthy() === true && !mcpIssue())
 
   createEffect(() => {
     const dir = params.dir ?? ""
@@ -52,7 +54,9 @@ export function StatusPopover() {
             classList={{
               "absolute -top-px -right-px size-1.5 rounded-full": true,
               "bg-icon-success-base": ready() && healthy(),
-              "bg-icon-critical-base": server.healthy() === false || (ready() && !healthy()),
+              "bg-icon-warning-base": ready() && server.healthy() === true && mcpIssue() === "warning",
+              "bg-icon-critical-base":
+                server.healthy() === false || (ready() && server.healthy() === true && mcpIssue() === "critical"),
               "bg-border-weak-base": server.healthy() === undefined || !ready(),
             }}
           />
