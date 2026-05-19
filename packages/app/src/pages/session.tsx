@@ -472,13 +472,13 @@ export default function Page() {
       gcTime: 60 * 1000,
       queryFn: mode
         ? () =>
-            sdk.client.vcs
-              .diff({ mode })
-              .then((result) => list(result.data))
-              .catch((error) => {
-                console.debug("[session-review] failed to load vcs diff", { mode, error })
-                return []
-              })
+          sdk.client.vcs
+            .diff({ mode })
+            .then((result) => list(result.data))
+            .catch((error) => {
+              console.debug("[session-review] failed to load vcs diff", { mode, error })
+              return []
+            })
         : skipToken,
     }
   })
@@ -604,7 +604,7 @@ export default function Page() {
   let dockHeight = 0
   let scroller: HTMLDivElement | undefined
   let content: HTMLDivElement | undefined
-  let revealMessage = (_id: string) => {}
+  let revealMessage = (_id: string) => { }
   let scrollMark = 0
   let messageMark = 0
 
@@ -636,10 +636,10 @@ export default function Page() {
       const stale = !cached
         ? false
         : (() => {
-            const info = getSessionPrefetch(directory, id)
-            if (!info) return true
-            return Date.now() - info.at > SESSION_PREFETCH_TTL
-          })()
+          const info = getSessionPrefetch(directory, id)
+          if (!info) return true
+          return Date.now() - info.at > SESSION_PREFETCH_TTL
+        })()
 
       refreshFrame = requestAnimationFrame(() => {
         refreshFrame = undefined
@@ -1248,7 +1248,7 @@ export default function Page() {
     ),
   )
 
-  let fill = () => {}
+  let fill = () => { }
 
   const setScrollRef = (el: HTMLDivElement | undefined) => {
     scroller = el
@@ -1479,7 +1479,7 @@ export default function Page() {
   }
 
   const halt = (sessionID: string) =>
-    busy(sessionID) ? sdk.client.session.abort({ sessionID }).catch(() => {}) : Promise.resolve()
+    busy(sessionID) ? sdk.client.session.abort({ sessionID }).catch(() => { }) : Promise.resolve()
 
   const revertMutation = useMutation(() => ({
     mutationFn: async (input: { sessionID: string; messageID: string }) => {
@@ -1526,11 +1526,11 @@ export default function Page() {
       const task = !next
         ? halt(sessionID).then(() => sdk.client.session.unrevert({ sessionID }))
         : halt(sessionID).then(() =>
-            sdk.client.session.revert({
-              sessionID,
-              messageID: next.id,
-            }),
-          )
+          sdk.client.session.revert({
+            sessionID,
+            messageID: next.id,
+          }),
+        )
 
       await task
         .then((result) => {
@@ -1768,32 +1768,32 @@ export default function Page() {
             followup={
               params.id && !isChildSession()
                 ? {
-                    queue: queueEnabled,
-                    items: followupDock(),
-                    sending: sendingFollowup(),
-                    edit: editingFollowup(),
-                    onQueue: queueFollowup,
-                    onAbort: () => {
-                      const id = params.id
-                      if (!id) return
-                      setFollowup("paused", id, true)
-                    },
-                    onSend: (id) => {
-                      void sendFollowup(params.id!, id, { manual: true })
-                    },
-                    onEdit: editFollowup,
-                    onEditLoaded: clearFollowupEdit,
-                  }
+                  queue: queueEnabled,
+                  items: followupDock(),
+                  sending: sendingFollowup(),
+                  edit: editingFollowup(),
+                  onQueue: queueFollowup,
+                  onAbort: () => {
+                    const id = params.id
+                    if (!id) return
+                    setFollowup("paused", id, true)
+                  },
+                  onSend: (id) => {
+                    void sendFollowup(params.id!, id, { manual: true })
+                  },
+                  onEdit: editFollowup,
+                  onEditLoaded: clearFollowupEdit,
+                }
                 : undefined
             }
             revert={
               rolled().length > 0
                 ? {
-                    items: rolled(),
-                    restoring: restoring(),
-                    disabled: reverting(),
-                    onRestore: restore,
-                  }
+                  items: rolled(),
+                  restoring: restoring(),
+                  disabled: reverting(),
+                  onRestore: restore,
+                }
                 : undefined
             }
             setPromptDockRef={(el) => {

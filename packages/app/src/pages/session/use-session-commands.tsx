@@ -289,7 +289,7 @@ export const useSessionCommands = (actions: SessionCommandContext) => {
     if (!sessionID) return
 
     if (sync.data.session_working(params.id ?? "")) {
-      await sdk.client.session.abort({ sessionID }).catch(() => {})
+      await sdk.client.session.abort({ sessionID }).catch(() => { })
     }
 
     const revert = info()?.revert?.messageID
@@ -459,16 +459,16 @@ export const useSessionCommands = (actions: SessionCommandContext) => {
     }),
     ...(platform.platform === "desktop" && settings.browser.enabled()
       ? [
-          viewCommand({
-            id: "browser.toggle",
-            title: language.t("command.browser.toggle"),
-            slash: "browser",
-            onSelect: () => {
-              view().browser.open()
-              void tabs().open("browser")
-            },
-          }),
-        ]
+        viewCommand({
+          id: "browser.toggle",
+          title: language.t("command.browser.toggle"),
+          slash: "browser",
+          onSelect: () => {
+            view().browser.open()
+            void tabs().open("browser")
+          },
+        }),
+      ]
       : []),
     viewCommand({
       id: "review.toggle",
@@ -478,13 +478,13 @@ export const useSessionCommands = (actions: SessionCommandContext) => {
     }),
     ...(shown()
       ? [
-          viewCommand({
-            id: "fileTree.toggle",
-            title: language.t("command.fileTree.toggle"),
-            keybind: "mod+\\",
-            onSelect: () => layout.fileTree.toggle(),
-          }),
-        ]
+        viewCommand({
+          id: "fileTree.toggle",
+          title: language.t("command.fileTree.toggle"),
+          keybind: "mod+\\",
+          onSelect: () => layout.fileTree.toggle(),
+        }),
+      ]
       : []),
     viewCommand({
       id: "input.focus",
