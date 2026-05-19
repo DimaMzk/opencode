@@ -36,6 +36,10 @@ export interface Settings {
   updates: {
     startup: boolean
   }
+  browser: {
+    enabled: boolean
+    userAgent: string
+  }
   appearance: {
     fontSize: number
     mono: string
@@ -120,6 +124,10 @@ const defaultSettings: Settings = {
   },
   updates: {
     startup: true,
+  },
+  browser: {
+    enabled: true,
+    userAgent: "",
   },
   appearance: {
     fontSize: 14,
@@ -241,6 +249,16 @@ export const { use: useSettings, provider: SettingsProvider } = createSimpleCont
         startup: withFallback(() => store.updates?.startup, defaultSettings.updates.startup),
         setStartup(value: boolean) {
           setStore("updates", "startup", value)
+        },
+      },
+      browser: {
+        enabled: withFallback(() => store.browser?.enabled, defaultSettings.browser.enabled),
+        setEnabled(value: boolean) {
+          setStore("browser", "enabled", value)
+        },
+        userAgent: withFallback(() => store.browser?.userAgent, defaultSettings.browser.userAgent),
+        setUserAgent(value: string) {
+          setStore("browser", "userAgent", value.trim() ? value : "")
         },
       },
       appearance: {

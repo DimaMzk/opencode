@@ -16,6 +16,7 @@ import { Portal } from "solid-js/web"
 import { useDialog } from "@opencode-ai/ui/context/dialog"
 import { useLayout } from "@/context/layout"
 import type { BrowserAnnotation } from "@/context/prompt"
+import { useSettings } from "@/context/settings"
 
 const DEFAULT_URL = "about:blank"
 
@@ -59,6 +60,7 @@ function BrowserNativeView(props: {
   viewport: () => HTMLElement | undefined
 }) {
   const layout = useLayout()
+  const settings = useSettings()
   const view = createMemo(() => layout.view(props.dir))
   const url = createMemo(() => view().browser.url() ?? DEFAULT_URL)
   const [snapshot, setSnapshot] = createSignal<string | undefined>()
@@ -69,6 +71,7 @@ function BrowserNativeView(props: {
   const api = () => window.api
 
   const setBounds = (rect: Rect) => {
+    if (!settings.browser.enabled()) return
     if (
       lastRect &&
       lastRect.top === rect.top &&
@@ -83,6 +86,7 @@ function BrowserNativeView(props: {
   }
 
   const updateRect = () => {
+    if (!settings.browser.enabled()) return
     const el = props.viewport()
     if (!el) return
     const next = el.getBoundingClientRect()
@@ -106,7 +110,7 @@ function BrowserNativeView(props: {
     void api()?.browserNavigate?.(props.dir, next)
   }
 
-  const usable = createMemo(() => props.active() && !!props.viewport() && url() !== DEFAULT_URL)
+  const usable = createMemo(() => settings.browser.enabled() && props.active() && !!props.viewport() && url() !== DEFAULT_URL)
 
   const refreshSnapshot = async () => {
     const request = ++captureRequest
@@ -117,7 +121,11 @@ function BrowserNativeView(props: {
 
   createEffect(() => {
     if (!props.dir) return
-    void api()?.browserEnsure?.(props.dir, url())
+    if (!settings.browser.enabled()) {
+      void api()?.browserSetActive?.(props.dir, false)
+      return
+    }
+    void api()?.browserEnsure?.(props.dir, url(), { userAgent: settings.browser.userAgent() })
   })
 
   createEffect(() => {
@@ -126,7 +134,10 @@ function BrowserNativeView(props: {
     void api()?.browserSetActive?.(props.dir, usable() && !props.occluded())
   })
 
-  createEffect(() => loadUrl(url()))
+  createEffect(() => {
+    if (!settings.browser.enabled()) return
+    loadUrl(url())
+  })
 
   createEffect(() => {
     if (!usable()) {

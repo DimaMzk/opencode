@@ -745,6 +745,7 @@ export const dict = {
   "settings.general.section.updates": "Updates",
   "settings.general.section.sounds": "Sound effects",
   "settings.general.section.feed": "Feed",
+  "settings.general.section.browser": "Browser",
   "settings.general.section.display": "Display",
 
   "settings.general.row.language.title": "Language",
@@ -791,6 +792,11 @@ export const dict = {
   "settings.general.row.showSessionProgressBar.title": "Show session progress bar",
   "settings.general.row.showSessionProgressBar.description":
     "Display the animated progress bar at the top of the session when the agent is working",
+  "settings.general.row.browserEnabled.title": "Built-in browser",
+  "settings.general.row.browserEnabled.description": "Enable the desktop browser panel and commands",
+  "settings.general.row.browserUserAgent.title": "Browser user agent",
+  "settings.general.row.browserUserAgent.description": "Override the user agent used by the built-in browser",
+  "settings.general.row.browserUserAgent.placeholder": "Use Electron default",
 
   "settings.general.row.wayland.title": "Use native Wayland",
   "settings.general.row.wayland.description": "Disable X11 fallback on Wayland. Requires restart.",

@@ -4,6 +4,7 @@ import type { IpcMainEvent, IpcMainInvokeEvent } from "electron"
 
 import type {
   InitStep,
+  BrowserOptions,
   BrowserDevToolsMode,
   BrowserRect,
   ServerReadyData,
@@ -84,8 +85,8 @@ export function registerIpcHandlers(deps: Deps) {
   ipcMain.handle("check-update", () => deps.checkUpdate())
   ipcMain.handle("install-update", () => deps.installUpdate())
   ipcMain.handle("set-background-color", (_event: IpcMainInvokeEvent, color: string) => deps.setBackgroundColor(color))
-  ipcMain.handle("browser-ensure", (event: IpcMainInvokeEvent, dir: string, url?: string) =>
-    browserEnsure(event, dir, url),
+  ipcMain.handle("browser-ensure", (event: IpcMainInvokeEvent, dir: string, url?: string, options?: BrowserOptions) =>
+    browserEnsure(event, dir, url, options),
   )
   ipcMain.handle("browser-set-bounds", (event: IpcMainInvokeEvent, dir: string, rect: BrowserRect) =>
     browserSetBounds(event, dir, rect),

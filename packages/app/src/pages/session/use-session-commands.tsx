@@ -457,7 +457,7 @@ export const useSessionCommands = (actions: SessionCommandContext) => {
       slash: "terminal",
       onSelect: () => view().terminal.toggle(),
     }),
-    ...(platform.platform === "desktop"
+    ...(platform.platform === "desktop" && settings.browser.enabled()
       ? [
           viewCommand({
             id: "browser.toggle",

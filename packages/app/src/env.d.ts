@@ -89,7 +89,7 @@ declare global {
   interface Window {
     api?: {
       setTitlebar?: (theme: { mode: "light" | "dark" }) => Promise<void>
-      browserEnsure?: (dir: string, url?: string) => Promise<void>
+      browserEnsure?: (dir: string, url?: string, options?: { userAgent?: string }) => Promise<void>
       browserSetBounds?: (dir: string, rect: BrowserRect) => Promise<void>
       browserCapture?: (dir: string) => Promise<string | null>
       browserSetActive?: (dir: string, active: boolean) => Promise<void>

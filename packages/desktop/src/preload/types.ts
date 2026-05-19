@@ -81,6 +81,9 @@ export type BrowserAnnotation = {
 }
 
 export type BrowserDevToolsMode = "right" | "bottom" | "detach"
+export type BrowserOptions = {
+  userAgent?: string
+}
 
 export type ElectronAPI = {
   killSidecar: () => Promise<void>
@@ -139,7 +142,7 @@ export type ElectronAPI = {
   checkUpdate: () => Promise<{ updateAvailable: boolean; version?: string }>
   installUpdate: () => Promise<void>
   setBackgroundColor: (color: string) => Promise<void>
-  browserEnsure: (dir: string, url?: string) => Promise<void>
+  browserEnsure: (dir: string, url?: string, options?: BrowserOptions) => Promise<void>
   browserSetBounds: (dir: string, rect: BrowserRect) => Promise<void>
   browserCapture: (dir: string) => Promise<string | null>
   browserSetActive: (dir: string, active: boolean) => Promise<void>

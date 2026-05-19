@@ -257,6 +257,7 @@ export const SettingsGeneral: Component = () => {
   const mono = () => monoInput(settings.appearance.font())
   const sans = () => sansInput(settings.appearance.uiFont())
   const terminal = () => terminalInput(settings.appearance.terminalFont())
+  const browserUserAgent = () => settings.browser.userAgent()
 
   const soundSelectProps = (
     enabled: () => boolean,
@@ -588,6 +589,45 @@ export const SettingsGeneral: Component = () => {
     </div>
   )
 
+  const BrowserSection = () => (
+    <div class="flex flex-col gap-1">
+      <h3 class="text-14-medium text-text-strong pb-2">{language.t("settings.general.section.browser")}</h3>
+
+      <SettingsList>
+        <SettingsRow
+          title={language.t("settings.general.row.browserEnabled.title")}
+          description={language.t("settings.general.row.browserEnabled.description")}
+        >
+          <div data-action="settings-browser-enabled">
+            <Switch checked={settings.browser.enabled()} onChange={(checked) => settings.browser.setEnabled(checked)} />
+          </div>
+        </SettingsRow>
+
+        <SettingsRow
+          title={language.t("settings.general.row.browserUserAgent.title")}
+          description={language.t("settings.general.row.browserUserAgent.description")}
+        >
+          <div class="w-full sm:w-[360px]">
+            <TextField
+              data-action="settings-browser-user-agent"
+              label={language.t("settings.general.row.browserUserAgent.title")}
+              hideLabel
+              type="text"
+              value={browserUserAgent()}
+              onChange={(value) => settings.browser.setUserAgent(value)}
+              placeholder={language.t("settings.general.row.browserUserAgent.placeholder")}
+              spellcheck={false}
+              autocorrect="off"
+              autocomplete="off"
+              autocapitalize="off"
+              class="text-12-regular"
+            />
+          </div>
+        </SettingsRow>
+      </SettingsList>
+    </div>
+  )
+
   const NotificationsSection = () => (
     <div class="flex flex-col gap-1">
       <h3 class="text-14-medium text-text-strong pb-2">{language.t("settings.general.section.notifications")}</h3>
@@ -740,6 +780,10 @@ export const SettingsGeneral: Component = () => {
 
       <div class="flex flex-col gap-8 w-full">
         <GeneralSection />
+
+        <Show when={desktop()}>
+          <BrowserSection />
+        </Show>
 
         <AppearanceSection />
 

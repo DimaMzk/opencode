@@ -160,7 +160,7 @@ export function SessionHeader() {
   const tree = createMemo(() => !isDesktopBeta || settings.general.showFileTree())
   const term = createMemo(() => !isDesktopBeta || settings.general.showTerminal())
   const status = createMemo(() => !isDesktopBeta || settings.general.showStatus())
-  const browserAvailable = createMemo(() => platform.platform === "desktop")
+  const browserAvailable = createMemo(() => platform.platform === "desktop" && settings.browser.enabled())
 
   const [exists, setExists] = createStore<Partial<Record<OpenApp, boolean>>>({
     finder: true,

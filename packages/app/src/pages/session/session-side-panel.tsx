@@ -68,7 +68,9 @@ export function SessionSidePanel(props: {
   )
 
   const reviewOpen = createMemo(() => isDesktop() && view().reviewPanel.opened())
-  const browserOpen = createMemo(() => isDesktop() && platform.platform === "desktop" && view().browser.opened())
+  const browserOpen = createMemo(
+    () => isDesktop() && platform.platform === "desktop" && settings.browser.enabled() && view().browser.opened(),
+  )
   const fileOpen = createMemo(() => isDesktop() && shown() && layout.fileTree.opened())
   const open = createMemo(() => reviewOpen() || browserOpen() || fileOpen())
   const reviewTab = createMemo(() => isDesktop())
@@ -170,6 +172,11 @@ export function SessionSidePanel(props: {
     view().browser.close()
     tabs().close("browser")
   }
+
+  createEffect(() => {
+    if (settings.browser.enabled() || !view().browser.opened()) return
+    closeBrowser()
+  })
 
   const [store, setStore] = createStore({
     activeDraggable: undefined as string | undefined,

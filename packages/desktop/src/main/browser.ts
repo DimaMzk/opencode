@@ -1,6 +1,6 @@
 import { BrowserWindow, WebContentsView, shell } from "electron"
 import type { IpcMainInvokeEvent } from "electron"
-import type { BrowserDevToolsMode, BrowserRect, BrowserState } from "../preload/types"
+import type { BrowserDevToolsMode, BrowserOptions, BrowserRect, BrowserState } from "../preload/types"
 import { BROWSER_ANNOTATION_SCRIPT, parseBrowserAnnotation } from "./browser-annotation"
 
 const DEFAULT_URL = "about:blank"
@@ -8,6 +8,7 @@ const PARTITION = "persist:opencode-browser"
 
 const windows = new WeakMap<BrowserWindow, Map<string, WebContentsView>>()
 const windowBounds = new WeakMap<BrowserWindow, Map<string, BrowserRect>>()
+const defaultUserAgents = new WeakMap<WebContentsView, string>()
 const activeWindows = new Set<BrowserWindow>()
 
 export type BrowserAutomationTarget = {
@@ -107,6 +108,7 @@ function ensure(win: BrowserWindow, dir: string) {
     },
   })
 
+  defaultUserAgents.set(view, view.webContents.getUserAgent())
   view.setBackgroundColor("#ffffff")
   view.setVisible(false)
   view.webContents.setZoomFactor(win.webContents.getZoomFactor())
@@ -134,6 +136,13 @@ function ensure(win: BrowserWindow, dir: string) {
   map.set(dir, view)
   maybeRegisterMcp(dir)
   return view
+}
+
+function applyUserAgent(view: WebContentsView, options?: BrowserOptions) {
+  const fallback = defaultUserAgents.get(view) ?? view.webContents.getUserAgent()
+  const next = options?.userAgent?.trim() ? options.userAgent.trim() : fallback
+  if (view.webContents.getUserAgent() === next) return
+  view.webContents.setUserAgent(next)
 }
 
 export function browserAutomationTargets(): BrowserAutomationTarget[] {
@@ -166,11 +175,12 @@ function windowFrom(event: IpcMainInvokeEvent) {
   return BrowserWindow.fromWebContents(event.sender)
 }
 
-export function browserEnsure(event: IpcMainInvokeEvent, dir: string, url?: string) {
+export function browserEnsure(event: IpcMainInvokeEvent, dir: string, url?: string, options?: BrowserOptions) {
   const win = windowFrom(event)
   if (!win || !dir) return
 
   const view = ensure(win, dir)
+  applyUserAgent(view, options)
   if (url && url !== DEFAULT_URL && view.webContents.getURL() !== url) void view.webContents.loadURL(url)
   send(win, dir, view, view.webContents.isLoading())
 }

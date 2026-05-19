@@ -264,7 +264,9 @@ export default function Page() {
   const isDesktop = createMediaQuery("(min-width: 768px)")
   const size = createSizing()
   const desktopReviewOpen = createMemo(() => isDesktop() && view().reviewPanel.opened())
-  const desktopBrowserOpen = createMemo(() => isDesktop() && platform.platform === "desktop" && view().browser.opened())
+  const desktopBrowserOpen = createMemo(
+    () => isDesktop() && platform.platform === "desktop" && settings.browser.enabled() && view().browser.opened(),
+  )
   const desktopFileTreeOpen = createMemo(() => isDesktop() && layout.fileTree.opened())
   const desktopSidePanelOpen = createMemo(() => desktopReviewOpen() || desktopBrowserOpen() || desktopFileTreeOpen())
   const sessionPanelWidth = createMemo(() => {
@@ -306,7 +308,7 @@ export default function Page() {
     normalizeTab,
     review: reviewTab,
     hasReview: canReview,
-    browser: createMemo(() => isDesktop() && view().browser.opened()),
+    browser: desktopBrowserOpen,
   })
   const activeTab = tabState.activeTab
   const activeFileTab = tabState.activeFileTab
