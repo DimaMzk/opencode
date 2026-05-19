@@ -99,7 +99,7 @@ export function BrowserPanel(props: { active: Accessor<boolean> }) {
   return (
     <div id="browser-panel" class="flex flex-col h-full overflow-hidden bg-background-stronger contain-strict">
       <div class="h-10 flex items-center gap-1 px-2 border-b border-border-weaker-base bg-background-stronger">
-        <Tooltip placement="bottom" value={language.t("browser.back")}>
+        <Tooltip placement="top" value={language.t("browser.back")}>
           <Button
             variant="ghost"
             class="w-7 h-7 p-0 shrink-0"
@@ -110,7 +110,7 @@ export function BrowserPanel(props: { active: Accessor<boolean> }) {
             <Icon name="arrow-left" size="small" />
           </Button>
         </Tooltip>
-        <Tooltip placement="bottom" value={language.t("browser.forward")}>
+        <Tooltip placement="top" value={language.t("browser.forward")}>
           <Button
             variant="ghost"
             class="w-7 h-7 p-0 shrink-0"
@@ -121,7 +121,7 @@ export function BrowserPanel(props: { active: Accessor<boolean> }) {
             <Icon name="arrow-right" size="small" />
           </Button>
         </Tooltip>
-        <Tooltip placement="bottom" value={language.t("browser.reload")}>
+        <Tooltip placement="top" value={language.t("browser.reload")}>
           <Button
             variant="ghost"
             class="w-7 h-7 p-0 shrink-0"
@@ -131,36 +131,38 @@ export function BrowserPanel(props: { active: Accessor<boolean> }) {
             <Icon name="reset" size="small" classList={{ "animate-spin": state().loading }} />
           </Button>
         </Tooltip>
-        <DropdownMenu gutter={4} placement="bottom-end" open={devToolsMenuOpen()} onOpenChange={setDevToolsMenuOpen}>
-          <DropdownMenu.Trigger
-            as={Button}
-            variant="ghost"
-            class="w-7 h-7 p-0 shrink-0 data-[expanded]:bg-surface-raised-base-active"
-            aria-label={language.t("browser.devTools")}
-          >
-            <Icon name="code" size="small" />
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Portal>
-            <DropdownMenu.Content>
-              <DropdownMenu.Group>
-                <DropdownMenu.GroupLabel>{language.t("browser.devTools")}</DropdownMenu.GroupLabel>
-                <For each={DEVTOOLS_OPTIONS}>
-                  {(option) => (
-                    <DropdownMenu.Item
-                      onSelect={() => {
-                        setDevToolsMenuOpen(false)
-                        browser.devTools(dir(), option.mode)
-                      }}
-                    >
-                      <DropdownMenu.ItemLabel>{language.t(option.label)}</DropdownMenu.ItemLabel>
-                    </DropdownMenu.Item>
-                  )}
-                </For>
-              </DropdownMenu.Group>
-            </DropdownMenu.Content>
-          </DropdownMenu.Portal>
-        </DropdownMenu>
-        <Tooltip placement="bottom" value={language.t("browser.annotate")}>
+        <Tooltip placement="top" value={language.t("browser.devTools")}>
+          <DropdownMenu gutter={4} placement="bottom-end" open={devToolsMenuOpen()} onOpenChange={setDevToolsMenuOpen}>
+            <DropdownMenu.Trigger
+              as={Button}
+              variant="ghost"
+              class="w-7 h-7 p-0 shrink-0 data-[expanded]:bg-surface-raised-base-active"
+              aria-label={language.t("browser.devTools")}
+            >
+              <Icon name="code" size="small" />
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content>
+                <DropdownMenu.Group>
+                  <DropdownMenu.GroupLabel>{language.t("browser.devTools")}</DropdownMenu.GroupLabel>
+                  <For each={DEVTOOLS_OPTIONS}>
+                    {(option) => (
+                      <DropdownMenu.Item
+                        onSelect={() => {
+                          setDevToolsMenuOpen(false)
+                          browser.devTools(dir(), option.mode)
+                        }}
+                      >
+                        <DropdownMenu.ItemLabel>{language.t(option.label)}</DropdownMenu.ItemLabel>
+                      </DropdownMenu.Item>
+                    )}
+                  </For>
+                </DropdownMenu.Group>
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu>
+        </Tooltip>
+        <Tooltip placement="top" value={language.t("browser.annotate")}>
           <Button
             variant="ghost"
             class="w-7 h-7 p-0 shrink-0"
@@ -186,7 +188,7 @@ export function BrowserPanel(props: { active: Accessor<boolean> }) {
             aria-label={language.t("browser.url.placeholder")}
           />
         </form>
-        <Tooltip placement="bottom" value={language.t("browser.go")}>
+        <Tooltip placement="top" value={language.t("browser.go")}>
           <Button variant="ghost" class="w-7 h-7 p-0 shrink-0" onClick={navigate} aria-label={language.t("browser.go")}>
             <Icon name="enter" size="small" />
           </Button>
