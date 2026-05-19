@@ -3,13 +3,14 @@ import { app, BrowserWindow, net, nativeImage, nativeTheme, protocol } from "ele
 import { dirname, isAbsolute, join, relative, resolve } from "node:path"
 import { fileURLToPath, pathToFileURL } from "node:url"
 import type { TitlebarTheme } from "../preload/types"
-import { browserSetZoomFactor } from "./browser"
 
 const root = dirname(fileURLToPath(import.meta.url))
 const rendererRoot = join(root, "../renderer")
 const rendererProtocol = "oc"
 const rendererHost = "renderer"
 const clipboardWritePermission = "clipboard-sanitized-write"
+const notificationPermission = "notifications"
+const rendererPermissions = new Set([clipboardWritePermission, notificationPermission])
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -85,21 +86,22 @@ export function createMainWindow() {
     width: state.width,
     height: state.height,
     show: false,
+    autoHideMenuBar: true,
     title: "OpenCode",
     icon: iconPath(),
     backgroundColor,
     ...(process.platform === "darwin"
       ? {
-        titleBarStyle: "hidden" as const,
-        trafficLightPosition: { x: 12, y: 14 },
-      }
+          titleBarStyle: "hidden" as const,
+          trafficLightPosition: { x: 12, y: 14 },
+        }
       : {}),
     ...(process.platform === "win32"
       ? {
-        frame: false,
-        titleBarStyle: "hidden" as const,
-        titleBarOverlay: overlay({ mode }),
-      }
+          frame: false,
+          titleBarStyle: "hidden" as const,
+          titleBarOverlay: overlay({ mode }),
+        }
       : {}),
     webPreferences: {
       preload: join(root, "../preload/index.js"),
@@ -109,7 +111,7 @@ export function createMainWindow() {
     },
   })
 
-  allowClipboardWrite(win)
+  allowRendererPermissions(win)
 
   win.webContents.session.webRequest.onBeforeSendHeaders((details, callback) => {
     const { requestHeaders } = details
@@ -143,15 +145,16 @@ export function createLoadingWindow() {
     resizable: false,
     center: true,
     show: true,
+    autoHideMenuBar: true,
     icon: iconPath(),
     backgroundColor,
     ...(process.platform === "darwin" ? { titleBarStyle: "hidden" as const } : {}),
     ...(process.platform === "win32"
       ? {
-        frame: false,
-        titleBarStyle: "hidden" as const,
-        titleBarOverlay: overlay({ mode }),
-      }
+          frame: false,
+          titleBarStyle: "hidden" as const,
+          titleBarOverlay: overlay({ mode }),
+        }
       : {}),
     webPreferences: {
       preload: join(root, "../preload/index.js"),
@@ -161,7 +164,7 @@ export function createLoadingWindow() {
     },
   })
 
-  allowClipboardWrite(win)
+  allowRendererPermissions(win)
 
   loadWindow(win, "loading.html")
 
@@ -198,16 +201,16 @@ function loadWindow(win: BrowserWindow, html: string) {
   void win.loadURL(`${rendererProtocol}://${rendererHost}/${html}`)
 }
 
-function allowClipboardWrite(win: BrowserWindow) {
+function allowRendererPermissions(win: BrowserWindow) {
   win.webContents.session.setPermissionRequestHandler((webContents, permission, callback, details) => {
     callback(
-      permission === clipboardWritePermission &&
-      isTrustedRendererUrl(details.requestingUrl) &&
-      webContents.id === win.webContents.id,
+      rendererPermissions.has(permission) &&
+        isTrustedRendererUrl(details.requestingUrl) &&
+        webContents.id === win.webContents.id,
     )
   })
   win.webContents.session.setPermissionCheckHandler((webContents, permission, requestingOrigin, details) => {
-    if (permission !== clipboardWritePermission) return false
+    if (!rendererPermissions.has(permission)) return false
     if (webContents && webContents.id !== win.webContents.id) return false
     return isTrustedRendererUrl(details.requestingUrl) || isTrustedRendererUrl(requestingOrigin)
   })
@@ -226,7 +229,6 @@ function wireZoom(win: BrowserWindow) {
   win.webContents.setZoomFactor(1)
   win.webContents.on("zoom-changed", () => {
     win.webContents.setZoomFactor(1)
-    browserSetZoomFactor(win)
     updateTitlebar(win)
   })
 }
