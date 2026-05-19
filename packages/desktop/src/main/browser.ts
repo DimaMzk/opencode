@@ -1,4 +1,4 @@
-import { BrowserWindow, WebContentsView, shell } from "electron"
+import { BrowserWindow, WebContentsView, clipboard, shell } from "electron"
 import type { IpcMainInvokeEvent } from "electron"
 import type { BrowserDevToolsMode, BrowserOptions, BrowserRect, BrowserState } from "../preload/types"
 import { BROWSER_ANNOTATION_SCRIPT, parseBrowserAnnotation } from "./browser-annotation"
@@ -199,6 +199,18 @@ export async function browserCapture(event: IpcMainInvokeEvent, dir: string) {
   if (!view) return null
 
   return (await view.webContents.capturePage()).toDataURL()
+}
+
+export async function browserCopyScreenshot(event: IpcMainInvokeEvent, dir: string) {
+  const win = windowFrom(event)
+  const view = win && views(win).get(dir)
+  if (!view) return false
+
+  const image = await view.webContents.capturePage()
+  if (image.isEmpty()) return false
+
+  clipboard.writeImage(image)
+  return true
 }
 
 export function browserSetZoomFactor(win: BrowserWindow, factor = win.webContents.getZoomFactor()) {

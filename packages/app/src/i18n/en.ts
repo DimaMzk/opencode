@@ -164,6 +164,8 @@ export const dict = {
   "browser.devTools.bottom": "Dock bottom",
   "browser.devTools.window": "Separate window",
   "browser.annotate": "Annotate page",
+  "browser.screenshot": "Screenshot",
+  "browser.screenshot.copied": "Screenshot copied to clipboard",
 
   "provider.custom.title": "Custom provider",
   "provider.custom.description.prefix": "Configure an OpenAI-compatible provider. See the ",

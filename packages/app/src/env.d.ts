@@ -92,6 +92,7 @@ declare global {
       browserEnsure?: (dir: string, url?: string, options?: { userAgent?: string }) => Promise<void>
       browserSetBounds?: (dir: string, rect: BrowserRect) => Promise<void>
       browserCapture?: (dir: string) => Promise<string | null>
+      browserCopyScreenshot?: (dir: string) => Promise<boolean>
       browserSetActive?: (dir: string, active: boolean) => Promise<void>
       browserNavigate?: (dir: string, url: string) => Promise<void>
       browserBack?: (dir: string) => Promise<void>

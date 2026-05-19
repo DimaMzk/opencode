@@ -40,6 +40,7 @@ export function BrowserPanel(props: { active: Accessor<boolean> }) {
   const [input, setInput] = createSignal(DEFAULT_URL)
   const [devToolsMenuOpen, setDevToolsMenuOpen] = createSignal(false)
   const [annotating, setAnnotating] = createSignal(false)
+  const [screenshotting, setScreenshotting] = createSignal(false)
   let viewport: HTMLDivElement | undefined
 
   const dir = createMemo(() => params.dir ?? "")
@@ -94,6 +95,29 @@ export function BrowserPanel(props: { active: Accessor<boolean> }) {
     setAnnotating(false)
     if (!annotation) return
     prompt.context.add({ type: "browser", ...annotation })
+  }
+
+  const screenshot = async () => {
+    const key = dir()
+    if (!key || url() === DEFAULT_URL || screenshotting()) return
+
+    setScreenshotting(true)
+    const copied = await browser.screenshot(key).catch((error) => {
+      showToast({
+        variant: "error",
+        title: language.t("common.requestFailed"),
+        description: error instanceof Error ? error.message : String(error),
+      })
+      return false
+    })
+    setScreenshotting(false)
+    if (!copied) return
+    showToast({
+      variant: "success",
+      icon: "circle-check",
+      title: language.t("session.share.copy.copied"),
+      description: language.t("browser.screenshot.copied"),
+    })
   }
 
   return (
@@ -171,6 +195,17 @@ export function BrowserPanel(props: { active: Accessor<boolean> }) {
             aria-label={language.t("browser.annotate")}
           >
             <Icon name="window-cursor" size="small" classList={{ "animate-pulse": annotating() }} />
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top" value={language.t("browser.screenshot")}>
+          <Button
+            variant="ghost"
+            class="w-7 h-7 p-0 shrink-0"
+            disabled={url() === DEFAULT_URL || screenshotting()}
+            onClick={() => void screenshot()}
+            aria-label={language.t("browser.screenshot")}
+          >
+            <Icon name="photo" size="small" classList={{ "animate-pulse": screenshotting() }} />
           </Button>
         </Tooltip>
         <form

@@ -19,6 +19,7 @@ import {
   browserAnnotate,
   browserBack,
   browserCapture,
+  browserCopyScreenshot,
   browserEnsure,
   browserForward,
   browserNavigate,
@@ -92,6 +93,7 @@ export function registerIpcHandlers(deps: Deps) {
     browserSetBounds(event, dir, rect),
   )
   ipcMain.handle("browser-capture", (event: IpcMainInvokeEvent, dir: string) => browserCapture(event, dir))
+  ipcMain.handle("browser-copy-screenshot", (event: IpcMainInvokeEvent, dir: string) => browserCopyScreenshot(event, dir))
   ipcMain.handle("browser-set-active", (event: IpcMainInvokeEvent, dir: string, active: boolean) =>
     browserSetActive(event, dir, active),
   )

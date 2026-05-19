@@ -45,6 +45,7 @@ type BrowserContext = {
   back: (dir: string) => void
   forward: (dir: string) => void
   reload: (dir: string) => void
+  screenshot: (dir: string) => Promise<boolean>
   devTools: (dir: string, mode: BrowserDevToolsMode) => void
   annotate: (dir: string) => Promise<BrowserAnnotation | null>
 }
@@ -237,6 +238,9 @@ export function BrowserProvider(props: ParentProps) {
     },
     reload(dir) {
       void window.api?.browserReload?.(dir)
+    },
+    screenshot(dir) {
+      return window.api?.browserCopyScreenshot?.(dir) ?? Promise.resolve(false)
     },
     devTools(dir, mode) {
       void window.api?.browserOpenDevTools?.(dir, mode)

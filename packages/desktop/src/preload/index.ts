@@ -69,6 +69,7 @@ const api: ElectronAPI = {
   browserEnsure: (dir, url, options) => ipcRenderer.invoke("browser-ensure", dir, url, options),
   browserSetBounds: (dir, rect) => ipcRenderer.invoke("browser-set-bounds", dir, rect),
   browserCapture: (dir) => ipcRenderer.invoke("browser-capture", dir),
+  browserCopyScreenshot: (dir) => ipcRenderer.invoke("browser-copy-screenshot", dir),
   browserSetActive: (dir, active) => ipcRenderer.invoke("browser-set-active", dir, active),
   browserNavigate: (dir, url) => ipcRenderer.invoke("browser-navigate", dir, url),
   browserBack: (dir) => ipcRenderer.invoke("browser-back", dir),

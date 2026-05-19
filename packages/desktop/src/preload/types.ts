@@ -145,6 +145,7 @@ export type ElectronAPI = {
   browserEnsure: (dir: string, url?: string, options?: BrowserOptions) => Promise<void>
   browserSetBounds: (dir: string, rect: BrowserRect) => Promise<void>
   browserCapture: (dir: string) => Promise<string | null>
+  browserCopyScreenshot: (dir: string) => Promise<boolean>
   browserSetActive: (dir: string, active: boolean) => Promise<void>
   browserNavigate: (dir: string, url: string) => Promise<void>
   browserBack: (dir: string) => Promise<void>
