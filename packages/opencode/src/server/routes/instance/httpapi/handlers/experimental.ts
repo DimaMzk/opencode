@@ -8,8 +8,8 @@ import { Session } from "@/session/session"
 import { ToolJsonSchema } from "@/tool/json-schema"
 import { ToolRegistry } from "@/tool/registry"
 import { Worktree } from "@/worktree"
-import { Effect, Option, Schema } from "effect"
-import { HttpServerRequest, HttpServerResponse } from "effect/unstable/http"
+import { Effect, Option } from "effect"
+import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse"
 import { HttpApiBuilder, HttpApiError } from "effect/unstable/httpapi"
 import { InstanceHttpApi } from "../api"
 import { ConsoleSwitchPayload, SessionListQuery, ToolListQuery, WorktreeApiError } from "../groups/experimental"
@@ -109,22 +109,6 @@ export const experimentalHandlers = HttpApiBuilder.group(InstanceHttpApi, "exper
       return yield* mapWorktreeError(worktreeSvc.create(ctx.payload))
     })
 
-    const worktreeCreateRaw = Effect.fn("ExperimentalHttpApi.worktreeCreateRaw")(function* (ctx: {
-      request: HttpServerRequest.HttpServerRequest
-    }) {
-      const body = yield* Effect.orDie(ctx.request.text)
-      if (body.trim().length === 0) return yield* worktreeCreate({ payload: undefined })
-
-      const json = yield* Effect.try({
-        try: () => JSON.parse(body) as unknown,
-        catch: () => new HttpApiError.BadRequest({}),
-      })
-      const payload = yield* Schema.decodeUnknownEffect(Worktree.CreateInput)(json).pipe(
-        Effect.mapError(() => new HttpApiError.BadRequest({})),
-      )
-      return yield* worktreeCreate({ payload })
-    })
-
     const worktreeRemove = Effect.fn("ExperimentalHttpApi.worktreeRemove")(function* (input: {
       payload: Worktree.RemoveInput
     }) {
@@ -174,7 +158,7 @@ export const experimentalHandlers = HttpApiBuilder.group(InstanceHttpApi, "exper
       .handle("tool", tool)
       .handle("toolIDs", toolIDs)
       .handle("worktree", worktree)
-      .handleRaw("worktreeCreate", worktreeCreateRaw)
+      .handle("worktreeCreate", worktreeCreate)
       .handle("worktreeRemove", worktreeRemove)
       .handle("worktreeReset", worktreeReset)
       .handle("session", session)

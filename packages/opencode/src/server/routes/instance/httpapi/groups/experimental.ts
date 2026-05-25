@@ -170,7 +170,7 @@ export const ExperimentalApi = HttpApi.make("experimental")
           query: WorkspaceRoutingQuery,
           payload: Schema.UndefinedOr(Worktree.CreateInput),
           success: described(Worktree.Info, "Worktree created"),
-          error: [HttpApiError.BadRequest, WorktreeApiError],
+          error: WorktreeApiError,
         }).annotateMerge(
           OpenApi.annotations({
             identifier: "worktree.create",

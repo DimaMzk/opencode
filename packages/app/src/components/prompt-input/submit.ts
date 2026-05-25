@@ -233,7 +233,7 @@ export function createPromptSubmit(input: PromptSubmitInput) {
       .abort({
         sessionID,
       })
-      .catch(() => { })
+      .catch(() => {})
   }
 
   const restoreContextItems = (items: ContextItem[]) => {

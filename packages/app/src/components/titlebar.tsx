@@ -87,11 +87,6 @@ export function Titlebar(props: { update?: TitlebarUpdate }) {
     return undefined
   }
   const windowsControlsWidth = () => `${windowsControlsBaseWidth / Math.max(titlebarZoom(), 1)}px`
-  const channelBadge = createMemo(() => {
-    const channel = import.meta.env.VITE_OPENCODE_CHANNEL
-    if (channel !== "beta" && channel !== "dev") return
-    return channel.toUpperCase()
-  })
 
   const [history, setHistory] = createStore({
     stack: [] as string[],
@@ -416,13 +411,6 @@ export function Titlebar(props: { update?: TitlebarUpdate }) {
                 <ChannelIndicator />
                 <Show when={windows() || linux()}>
                   <WindowsAppMenu command={command} platform={platform} variant="v2" />
-                </Show>
-                <Show when={channelBadge()}>
-                  {(channel) => (
-                    <div class="bg-icon-interactive-base text-[#FFF] font-medium px-2 rounded-sm uppercase font-mono">
-                      {channel()}
-                    </div>
-                  )}
                 </Show>
                 <IconButtonV2
                   variant="ghost-muted"
@@ -770,6 +758,7 @@ function NewSessionTabItem(props: { href: string; title: string; onClose: () => 
 function ChannelIndicator() {
   const channel = import.meta.env.VITE_OPENCODE_CHANNEL
   if (channel !== "beta" && channel !== "dev") return null
+
   return (
     <div class="bg-icon-interactive-base text-[#FFF] font-medium px-2 rounded-sm uppercase font-mono">
       {channel.toUpperCase()}
