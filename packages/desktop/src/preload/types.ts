@@ -1,3 +1,5 @@
+import type { DesktopMenuAction } from "@opencode-ai/app/desktop-menu"
+
 export type InitStep = { phase: "server_waiting" } | { phase: "sqlite_waiting" } | { phase: "done" }
 
 export type ServerReadyData = {
@@ -14,7 +16,6 @@ export type LinuxDisplayBackend = "wayland" | "auto"
 export type TitlebarTheme = {
   mode: "light" | "dark"
 }
-
 export type WindowConfig = {
   updaterEnabled: boolean
 }
@@ -85,6 +86,14 @@ export type BrowserOptions = {
   userAgent?: string
 }
 
+export type FatalRendererError = {
+  error: string
+  url: string
+  version?: string
+  platform: string
+  os?: string
+}
+
 export type ElectronAPI = {
   killSidecar: () => Promise<void>
   installCli: () => Promise<string>
@@ -136,7 +145,12 @@ export type ElectronAPI = {
   relaunch: () => void
   getZoomFactor: () => Promise<number>
   setZoomFactor: (factor: number) => Promise<void>
+  getPinchZoomEnabled: () => Promise<boolean>
+  setPinchZoomEnabled: (enabled: boolean) => Promise<void>
+  onPinchZoomEnabledChanged: (cb: (enabled: boolean) => void) => () => void
+  onZoomFactorChanged: (cb: (factor: number) => void) => () => void
   setTitlebar: (theme: TitlebarTheme) => Promise<void>
+  runDesktopMenuAction: (action: DesktopMenuAction) => Promise<void>
   loadingWindowComplete: () => void
   runUpdater: (alertOnFail: boolean) => Promise<void>
   checkUpdate: () => Promise<{ updateAvailable: boolean; version?: string }>
@@ -154,4 +168,6 @@ export type ElectronAPI = {
   browserOpenDevTools: (dir: string, mode: BrowserDevToolsMode) => Promise<void>
   browserAnnotate: (dir: string) => Promise<BrowserAnnotation | null>
   onBrowserState: (cb: (state: BrowserState) => void) => () => void
+  exportDebugLogs: () => Promise<string>
+  recordFatalRendererError: (error: FatalRendererError) => Promise<void>
 }

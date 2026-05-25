@@ -35,6 +35,21 @@ type Rect = {
 
 export type BrowserDevToolsMode = "right" | "bottom" | "detach"
 type BrowserOcclusionSource = "devtools-menu" | "open-menu" | "status-popover"
+type BrowserApi = Window["api"] & {
+  browserEnsure?: (dir: string, url?: string, options?: { userAgent?: string }) => Promise<void>
+  browserSetBounds?: (dir: string, rect: Rect) => Promise<void>
+  browserCapture?: (dir: string) => Promise<string | null>
+  browserCopyScreenshot?: (dir: string) => Promise<boolean>
+  browserSetActive?: (dir: string, active: boolean) => Promise<void>
+  browserNavigate?: (dir: string, url: string) => Promise<void>
+  browserBack?: (dir: string) => Promise<void>
+  browserForward?: (dir: string) => Promise<void>
+  browserReload?: (dir: string) => Promise<void>
+  browserOpenDevTools?: (dir: string, mode: BrowserDevToolsMode) => Promise<void>
+  browserAnnotate?: (dir: string) => Promise<BrowserAnnotation | null>
+  onBrowserState?: (cb: (state: BrowserState) => void) => () => void
+}
+const browserApi = () => window.api as BrowserApi | undefined
 
 type BrowserContext = {
   state: (dir: string) => ChromeState
@@ -69,7 +84,7 @@ function BrowserNativeView(props: {
   let loadedUrl: string | undefined
   let captureRequest = 0
 
-  const api = () => window.api
+  const api = browserApi
 
   const setBounds = (rect: Rect) => {
     if (!settings.browser.enabled()) return
@@ -190,8 +205,9 @@ export function BrowserProvider(props: ParentProps) {
     setStore("dirs", store.dirs.length, dir)
   }
 
-  if (window.api?.onBrowserState) {
-    const cleanup = window.api.onBrowserState((state) => {
+  const native = browserApi()
+  if (native?.onBrowserState) {
+    const cleanup = native.onBrowserState((state) => {
       ensure(state.dir)
       layout.view(state.dir).browser.setUrl(state.url)
       setStore(
@@ -231,22 +247,22 @@ export function BrowserProvider(props: ParentProps) {
       layout.view(dir).browser.setUrl(url)
     },
     back(dir) {
-      void window.api?.browserBack?.(dir)
+      void browserApi()?.browserBack?.(dir)
     },
     forward(dir) {
-      void window.api?.browserForward?.(dir)
+      void browserApi()?.browserForward?.(dir)
     },
     reload(dir) {
-      void window.api?.browserReload?.(dir)
+      void browserApi()?.browserReload?.(dir)
     },
     screenshot(dir) {
-      return window.api?.browserCopyScreenshot?.(dir) ?? Promise.resolve(false)
+      return browserApi()?.browserCopyScreenshot?.(dir) ?? Promise.resolve(false)
     },
     devTools(dir, mode) {
-      void window.api?.browserOpenDevTools?.(dir, mode)
+      void browserApi()?.browserOpenDevTools?.(dir, mode)
     },
     annotate(dir) {
-      return window.api?.browserAnnotate?.(dir) ?? Promise.resolve(null)
+      return browserApi()?.browserAnnotate?.(dir) ?? Promise.resolve(null)
     },
   }
 
